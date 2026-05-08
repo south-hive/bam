@@ -19,7 +19,6 @@
 #include "mutex.h"
 #include "dprintf.h"
 
-
 typedef void (*va_unmap_t)(const struct device*, const struct va_range*);
 
 /*
@@ -36,8 +35,6 @@ struct map
     va_unmap_t          unmap;// Callback for unmapping address range
 };
 
-
-
 /*
  * Internal DMA handle container.
  *
@@ -50,13 +47,9 @@ struct __attribute__((aligned (32))) container
     nvm_dma_t           handle; // User handle
 };
 
-
-
 /* Calculate number of controller pages */
 #define n_ctrl_pages(ctrl, page_size, n_pages) \
     (((page_size) * (n_pages)) / (ctrl)->page_size)
-
-
 
 /*
  * Create reference counted mapping descriptor.
@@ -105,8 +98,6 @@ static int create_map(struct map** md, const nvm_ctrl_t* ctrl, struct va_range* 
     return 0;
 }
 
-
-
 /*
  * Release mapping descriptor.
  */
@@ -115,8 +106,6 @@ static void remove_map(struct map* md)
     _nvm_ctrl_put(md->ctrl);
     free(md);
 }
-
-
 
 /*
  * Helper function to initialize DMA handle members and 
@@ -147,8 +136,6 @@ static void populate_handle(nvm_dma_t* handle, const struct va_range* va, const 
         }
     }
 }
-
-
 
 /*
  * Helper function to map an address range for device and populate DMA handle.
@@ -184,8 +171,6 @@ static int dma_map(struct container* container)
     return 0;
 }
 
-
-
 /*
  * Decrease mapping descriptor reference count.
  */
@@ -214,8 +199,6 @@ static void put_map(struct map* md)
     }
 }
 
-
-
 /*
  * Increase mapping descriptor reference count.
  */
@@ -240,8 +223,6 @@ static int get_map(struct map* md)
 
     return 0;
 }
-
-
 
 /*
  * Create a DMA handle container.
@@ -280,8 +261,6 @@ static int create_container(struct container** container, struct map* md)
     return 0;
 }
 
-
-
 /*
  * Call release callback and free container.
  * NB! unmap (if map was successful) must be called
@@ -293,8 +272,6 @@ static void remove_container(struct container* container)
     container->map = NULL;
     free(container);
 }
-
-
 
 /*
  * Create and initialize a DMA handle, and map a virtual address range 
@@ -338,8 +315,6 @@ int _nvm_dma_init(nvm_dma_t** handle, const nvm_ctrl_t* ctrl, struct va_range* v
     *handle = &container->handle;
     return 0;
 }
-
-
 
 /*
  * Create DMA mapping descriptor from user supplied physical/bus addresses.
@@ -393,8 +368,6 @@ int nvm_dma_map(nvm_dma_t** handle, const nvm_ctrl_t* ctrl, void* vaddr, size_t 
     return 0;
 }
 
-
-
 /*
  * Create DMA mapping descriptor from other descriptor.
  */
@@ -435,8 +408,6 @@ int nvm_dma_remap(nvm_dma_t** handle, const nvm_dma_t* other)
     return 0;
 }
 
-
-
 /*
  * Remove DMA mapping descriptor.
  */
@@ -449,8 +420,6 @@ void nvm_dma_unmap(nvm_dma_t* handle)
     }
 }
 
-
-
 const nvm_ctrl_t* nvm_ctrl_from_dma(const nvm_dma_t* handle)
 {
     if (handle != NULL)
@@ -462,8 +431,6 @@ const nvm_ctrl_t* nvm_ctrl_from_dma(const nvm_dma_t* handle)
 
     return NULL;
 }
-
-
 
 const struct va_range* _nvm_dma_va(const nvm_dma_t* handle)
 {
@@ -479,4 +446,3 @@ const struct va_range* _nvm_dma_va(const nvm_dma_t* handle)
 
     return NULL;
 }
-

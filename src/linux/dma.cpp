@@ -23,8 +23,6 @@
 #include "linux/map.h"
 #include "dprintf.h"
 
-
-
 static void remove_mapping_descriptor(struct ioctl_mapping* md)
 {
     if (md->type == MAP_TYPE_API)
@@ -35,14 +33,10 @@ static void remove_mapping_descriptor(struct ioctl_mapping* md)
     free(md);
 }
 
-
-
 static void release_mapping_descriptor(struct va_range* va)
 {
     remove_mapping_descriptor(_nvm_container_of(va, struct ioctl_mapping, range));
 }
-
-
 
 static int create_mapping_descriptor(struct ioctl_mapping** handle, size_t page_size, enum mapping_type type, void* buffer, size_t size)
 {
@@ -69,8 +63,6 @@ static int create_mapping_descriptor(struct ioctl_mapping** handle, size_t page_
     *handle = md;
     return 0;
 }
-
-
 
 int nvm_dma_create(nvm_dma_t** handle, const nvm_ctrl_t* ctrl, size_t size)
 {
@@ -113,8 +105,6 @@ int nvm_dma_create(nvm_dma_t** handle, const nvm_ctrl_t* ctrl, size_t size)
     return 0;
 }
 
-
-
 int nvm_dma_map_host(nvm_dma_t** handle, const nvm_ctrl_t* ctrl, void* vaddr, size_t size)
 {
     struct ioctl_mapping* md;
@@ -146,8 +136,6 @@ int nvm_dma_map_host(nvm_dma_t** handle, const nvm_ctrl_t* ctrl, void* vaddr, si
 
     return 0;
 }
-
-
 
 #ifdef _CUDA
 int nvm_dma_map_device(nvm_dma_t** handle, const nvm_ctrl_t* ctrl, void* devptr, size_t size)

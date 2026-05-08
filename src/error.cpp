@@ -6,7 +6,6 @@
 #include <string.h>
 #include <stdio.h>
 
-
 static const char* generic_status[] =
 {
     "Success",
@@ -43,8 +42,6 @@ static const char* generic_status[] =
     "Command not supported for queue in CMB"
 };
 
-
-
 static const char* generic_status_nvm_commands[] = 
 {
     "LBA out of range",
@@ -53,8 +50,6 @@ static const char* generic_status_nvm_commands[] =
     "Reservation conflict",
     "Format in progress"
 };
-
-
 
 static const char* command_specific_status[] = 
 {
@@ -95,16 +90,12 @@ static const char* command_specific_status[] =
     "Invalid resource identifier"
 };
 
-
-
 static const char* command_specific_status_nvm_commands[] =
 {
     "Conflicting attributes",
     "Invalid protection information",
     "Attempted write to read only range"
 };
-
-
 
 static const char* media_and_data_integrity_nvm_commands[] = 
 {
@@ -117,8 +108,6 @@ static const char* media_and_data_integrity_nvm_commands[] =
     "Access denied",
     "Deallocated or unwritten logical block"
 };
-
-
 
 static const char* lookup_string(uint8_t status_code_type, uint8_t status_code)
 {
@@ -158,8 +147,6 @@ static const char* lookup_string(uint8_t status_code_type, uint8_t status_code)
     }
 }
 
-
-
 const char* nvm_strerror(int status)
 {
     int err;
@@ -179,4 +166,3 @@ const char* nvm_strerror(int status)
 
     return strerror(err);
 }
-

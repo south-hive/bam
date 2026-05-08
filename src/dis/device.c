@@ -24,8 +24,6 @@
 #include <sisci_error.h>
 #include <sisci_api.h>
 
-
-
 static int query_device(const struct device* dev, sci_smartio_device_info_t* info)
 {
     sci_error_t err;
@@ -44,8 +42,6 @@ static int query_device(const struct device* dev, sci_smartio_device_info_t* inf
 
     return 0;
 }
-
-
 
 /*
  * Helper function to connect to a device memory segment.
@@ -89,8 +85,6 @@ int _nvm_device_memory_get(sci_remote_segment_t* segment, const struct device* d
     }
 }
 
-
-
 void _nvm_device_memory_put(sci_remote_segment_t* segment)
 {
     if (segment != NULL && *segment != NULL)
@@ -113,8 +107,6 @@ void _nvm_device_memory_put(sci_remote_segment_t* segment)
         *segment = NULL;
     }
 }
-
-
 
 int _nvm_local_memory_get(sci_local_segment_t* segment, uint32_t* adapter, const struct device* dev, size_t size, void* ptr, bool gpu)
 {
@@ -199,8 +191,6 @@ int _nvm_local_memory_get(sci_local_segment_t* segment, uint32_t* adapter, const
     return 0;
 }
 
-
-
 void _nvm_local_memory_put(sci_local_segment_t* segment)
 {
     if (segment != NULL && *segment != NULL)
@@ -223,8 +213,6 @@ void _nvm_local_memory_put(sci_local_segment_t* segment)
         *segment = NULL;
     }
 }
-
-
 
 /*
  * Map local segment for device.
@@ -269,8 +257,6 @@ static int io_map_local(const struct device* dev, const struct local_segment* ls
     return 0;
 }
 
-
-
 /*
  * Map remote segment for device
  */
@@ -298,8 +284,6 @@ static int io_map_remote(const struct device* dev, const struct remote_segment* 
     *ioaddr = (uint64_t) addr;
     return 0;
 }
-
-
 
 /*
  * Take device reference ("borrow" device) and map MLBAR/BAR0
@@ -354,7 +338,6 @@ static int borrow_device(struct device** handle, uint32_t fdid)
                 status = ENODEV;
                 break;
 
-
             case SCI_ERR_NOT_AVAILABLE:
                 status = EBUSY;
                 break;
@@ -398,8 +381,6 @@ static int borrow_device(struct device** handle, uint32_t fdid)
     return 0;
 }
 
-
-
 /*
  * Release device reference ("return" device)
  */
@@ -427,8 +408,6 @@ static void return_device(struct device* dev, volatile void* mm_ptr, size_t mm_s
     free(dev);
 }
 
-
-
 /*
  * Dispatch the proper mapping function based on the type.
  */
@@ -453,8 +432,6 @@ static int io_map(const struct device* dev, const struct va_range* va, uint64_t*
         return io_map_local(dev, _nvm_container_of(va, struct local_segment, range), ioaddr);
     }
 }
-
-
 
 static void io_unmap(const struct device* dev, const struct va_range* va)
 {
@@ -504,8 +481,6 @@ static void io_unmap(const struct device* dev, const struct va_range* va)
     }
 }
 
-
-
 /*
  * Device operations
  */
@@ -515,8 +490,6 @@ static const struct device_ops smartio_device_ops =
     .map_range = &io_map,
     .unmap_range = &io_unmap,
 };
-
-
 
 int nvm_dis_ctrl_init(nvm_ctrl_t** ctrl, uint32_t fdid)
 {
@@ -541,8 +514,6 @@ int nvm_dis_ctrl_init(nvm_ctrl_t** ctrl, uint32_t fdid)
     return 0;
 }
 
-
-
 void nvm_dis_ctrl_unmap_p2p_device(const nvm_ctrl_t* ctrl, sci_smartio_device_t dev)
 {
     if (ctrl != NULL)
@@ -561,8 +532,6 @@ void nvm_dis_ctrl_unmap_p2p_device(const nvm_ctrl_t* ctrl, sci_smartio_device_t 
         }
     }
 }
-
-
 
 int nvm_dis_ctrl_map_p2p_device(const nvm_ctrl_t* ctrl, sci_smartio_device_t dev, uint64_t* ioaddr)
 {
@@ -596,8 +565,6 @@ int nvm_dis_ctrl_map_p2p_device(const nvm_ctrl_t* ctrl, sci_smartio_device_t dev
     return 0;
 }
 
-
-
 uint32_t nvm_dis_node_from_ctrl(const nvm_ctrl_t* ctrl)
 {
     int err;
@@ -630,4 +597,3 @@ uint32_t nvm_dis_node_from_ctrl(const nvm_ctrl_t* ctrl)
 
     return 0;
 }
-

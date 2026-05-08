@@ -29,11 +29,9 @@
 #include <sisci_api.h>
 #include <dis/dis_types.h>
 
-
 #define RPC_COMMAND_TIMEOUT     2500
 #define RPC_MAGIC_SIGNATURE     0xDEADBEEF
 #define N_ADAPTERS              DIS_MAX_NSCIS
-
 
 /*
  * RPC command message format.
@@ -45,8 +43,6 @@ struct __attribute__((packed)) rpc_cmd
     unsigned char               cmd[64];    // Command to execute
 };
 
-
-
 /*
  * RPC completion message format.
  */
@@ -55,8 +51,6 @@ struct __attribute__((packed)) rpc_cpl
     unsigned char               cmd[64];    // Modified command (zero'd means rejected)
     unsigned char               cpl[16];    // Command completion
 };
-
-
 
 /*
  * Information about binding handle (exported on shared device memory)
@@ -67,8 +61,6 @@ struct __attribute__((packed)) handle_info
     uint32_t                    node_id;    // Node identifier
     uint32_t                    intr_no;    // Interrupt number
 };
-
-
 
 /*
  * Local RPC binding handle.
@@ -82,8 +74,6 @@ struct binding_handle
     struct local_intr           intr;       // Interrupt handle
 };
 
-
-
 /*
  * Remote RPC binding.
  */
@@ -93,8 +83,6 @@ struct binding
     struct local_intr           lintr;      // Local interrupt handle
     struct remote_intr          rintr;      // Remote interrupt handle
 };
-
-
 
 /*
  * Handle remote command request.
@@ -132,8 +120,6 @@ static void handle_remote_command(struct binding_handle* handle, struct rpc_cmd*
         dprintf("Failed to establish reverse connection: %s\n", strerror(errno));
     }
 }
-
-
 
 /*
  * Initiate remote command request.
@@ -175,8 +161,6 @@ static int remote_command(struct binding* binding, nvm_cmd_t* cmd, nvm_cpl_t* cp
     return NVM_ERR_PACK(NULL, 0);
 }
 
-
-
 /* 
  * Helper function to write info about a handle.
  */
@@ -211,8 +195,6 @@ static int write_handle_info(const struct binding_handle* handle, uint32_t adapt
 
     return 0;
 }
-
-
 
 /*
  * Create shared segment for writing connection information and connect to it.
@@ -276,8 +258,6 @@ static int try_create(sci_remote_segment_t* segment, const struct device* dev)
     *segment = rseg;
     return 0;
 }   
-
-
 
 /*
  * Helper function to create a a server binding handle.
@@ -343,8 +323,6 @@ static int create_binding_handle(struct binding_handle** handle, nvm_aq_ref ref,
     return 0;
 }
 
-
-
 /*
  * Helper function to remove a server binding handle.
  */
@@ -358,8 +336,6 @@ static void remove_binding_handle(uint32_t adapter, struct binding_handle* handl
 
     free(handle);
 }
-
-
 
 /*
  * Helper function to try to connect to remote interrupt.
@@ -400,10 +376,8 @@ static int try_bind(struct binding* binding, uint32_t adapter, unsigned max)
     }
 
     SCIUnmapSegment(map, 0, &err);
-    //dprintf("Failed to connect to remote interrupt\n");
     return ECONNREFUSED;
 }
-
 
 /*
  * Helper function to connect to device shared memory,
@@ -449,8 +423,6 @@ static int create_binding(struct binding** handle, const struct device* dev, uin
     return 0;
 }
 
-
-
 /*
  * Helper function to disconnect from remote interrupt and 
  * shared device memory.
@@ -463,8 +435,6 @@ static void remove_binding(struct binding* binding)
 
     free(binding);
 }
-
-
 
 int nvm_dis_rpc_enable(nvm_aq_ref ref, uint32_t adapter, nvm_dis_rpc_cb_t filter)
 {
@@ -492,14 +462,10 @@ int nvm_dis_rpc_enable(nvm_aq_ref ref, uint32_t adapter, nvm_dis_rpc_cb_t filter
     return 0;
 }
 
-
-
 void nvm_dis_rpc_disable(nvm_aq_ref ref, uint32_t adapter)
 {
     _nvm_rpc_handle_remove(ref, adapter);
 }
-
-
 
 int nvm_dis_rpc_bind(nvm_aq_ref* handle, const nvm_ctrl_t* ctrl, uint32_t adapter)
 {
@@ -531,4 +497,3 @@ int nvm_dis_rpc_bind(nvm_aq_ref* handle, const nvm_ctrl_t* ctrl, uint32_t adapte
     *handle = ref;
     return 0;
 }
-

@@ -16,8 +16,6 @@
 #include <sisci_error.h>
 #include <sisci_api.h>
 
-
-
 /*
  * Do some sanity checking and then call supplied callback.
  */ 
@@ -45,8 +43,6 @@ static sci_callback_action_t interrupt_callback(struct local_intr* interrupt,
 
     return SCI_CALLBACK_CONTINUE;
 }
-
-
 
 int _nvm_local_intr_get(struct local_intr* intr, uint32_t adapter, void* cb_data, intr_callback_t cb)
 {
@@ -100,8 +96,6 @@ int _nvm_local_intr_get(struct local_intr* intr, uint32_t adapter, void* cb_data
     return 0;
 }
 
-
-
 void _nvm_local_intr_put(struct local_intr* intr)
 {
     sci_error_t err = SCI_ERR_OK;
@@ -114,8 +108,6 @@ void _nvm_local_intr_put(struct local_intr* intr)
 
     SCIClose(intr->sd, 0, &err);
 }
-
-
 
 int _nvm_local_intr_wait(struct local_intr* intr, void* data, uint16_t maxlen, uint32_t timeout)
 {
@@ -137,8 +129,6 @@ int _nvm_local_intr_wait(struct local_intr* intr, void* data, uint16_t maxlen, u
             return EIO;
     }
 }
-
-
 
 int _nvm_remote_intr_get(struct remote_intr* intr, uint32_t adapter, uint32_t node, uint32_t no)
 {
@@ -163,16 +153,12 @@ int _nvm_remote_intr_get(struct remote_intr* intr, uint32_t adapter, uint32_t no
     return 0;
 }
 
-
-
 void _nvm_remote_intr_put(struct remote_intr* intr)
 {
     sci_error_t err = SCI_ERR_OK;
     SCIDisconnectDataInterrupt(intr->intr, 0, &err);
     SCIClose(intr->sd, 0, &err);
 }
-
-
 
 /*
  * Trigger remote interrupt with data.
@@ -190,8 +176,6 @@ int _nvm_remote_intr_trigger(const struct remote_intr* intr, void* data, uint16_
 
     return 0;
 }
-
-
 
 /*
  * Convenience function for easy remote interrupt triggering.
@@ -211,4 +195,3 @@ int _nvm_remote_intr_fire_and_forget(uint32_t adapter, uint32_t node, uint32_t n
     _nvm_remote_intr_put(&intr);
     return status;
 }
-

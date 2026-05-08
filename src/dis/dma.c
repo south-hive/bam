@@ -24,8 +24,6 @@
 #include <sisci_error.h>
 #include <sisci_api.h>
 
-
-
 /* 
  * Map local segment into virtual address space.
  */
@@ -63,8 +61,6 @@ static int va_map_local(struct va_map* m, struct va_range* va, sci_local_segment
             return EIO;
     }
 }
-
-
 
 /* 
  * Map remote segment into virtual address space.
@@ -105,8 +101,6 @@ static int va_map_remote(struct va_map* m, struct va_range* va, sci_remote_segme
     }
 }
 
-
-
 /*
  * Unmap segment.
  */
@@ -133,8 +127,6 @@ static void va_unmap(struct va_map* m)
     }
 }
 
-
-
 /*
  * Helper function to create local segment descriptor.
  */
@@ -160,8 +152,6 @@ static int create_local_desc(struct local_segment** ls, struct controller* ctrl,
     *ls = s;
     return 0;
 }
-
-
 
 /*
  * Helper function to remove local segment descriptor
@@ -201,8 +191,6 @@ static void remove_local_desc(struct local_segment* ls)
     free(ls);
 }
 
-
-
 /*
  * Helper function to create remote segment descriptor
  */
@@ -229,8 +217,6 @@ static int create_remote_desc(struct remote_segment** rs, struct controller* ctr
     return 0;
 }
 
-
-
 /*
  * Helper function to remove remote segment descriptor.
  */
@@ -253,8 +239,6 @@ static void remove_remote_desc(struct remote_segment* rs)
     free(rs);
 }
 
-
-
 /*
  * Release segment mapping descriptor.
  * Dispatch the correct release function based on type (remote vs. local).
@@ -275,8 +259,6 @@ static void release_range(struct va_range* va)
         remove_local_desc(_nvm_container_of(va, struct local_segment, range));
     }
 }
-
-
 
 /*
  * Create DMA mapping for a local segment.
@@ -321,8 +303,6 @@ int nvm_dis_dma_map_local(nvm_dma_t** map, const nvm_ctrl_t* ctrl, uint32_t adap
 
     return 0;
 }
-
-
 
 /*
  * Create DMA mapping for a remote segment.
@@ -372,8 +352,6 @@ int nvm_dis_dma_map_remote(nvm_dma_t** map, const nvm_ctrl_t* ctrl, sci_remote_s
 
     return 0;
 }
-
-
 
 /*
  * Helper function to create a local segment and map it.
@@ -437,8 +415,6 @@ static int create_local_segment(struct va_range** va, const nvm_ctrl_t* ctrl, si
     *va = &ls->range;
     return 0;
 }
-
-
 
 /*
  * Helper function to create a device memory segment, connect to it and map it.
@@ -511,8 +487,6 @@ static int create_remote_segment(struct va_range** va, const nvm_ctrl_t* ctrl, s
     return 0;
 }
 
-
-
 /*
  * Create segment and map it.
  */
@@ -553,8 +527,6 @@ int nvm_dis_dma_create(nvm_dma_t** map, const nvm_ctrl_t* ctrl, size_t size, uns
     return 0;
 }
 
-
-
 int nvm_dis_dma_map_host(nvm_dma_t** map, const nvm_ctrl_t* ctrl, void* vaddr, size_t size)
 {
     int status;
@@ -584,8 +556,6 @@ int nvm_dis_dma_map_host(nvm_dma_t** map, const nvm_ctrl_t* ctrl, void* vaddr, s
 
     return 0;
 }
-
-
 
 #ifdef _CUDA
 /*
@@ -621,8 +591,6 @@ int nvm_dis_dma_map_device(nvm_dma_t** map, const nvm_ctrl_t* ctrl, void* devptr
     return 0;
 }
 #endif
-
-
 
 uint32_t nvm_dis_node_from_dma(const nvm_dma_t* handle)
 {
@@ -665,4 +633,3 @@ uint32_t nvm_dis_node_from_dma(const nvm_dma_t* handle)
 
     return 0;
 }
-

@@ -13,12 +13,9 @@
 #include "regs.h"
 #include "dprintf.h"
 
-
 /* Convenience defines */
 #define encode_page_size(ps)    _nvm_b2log((ps) >> 12)
 #define encode_entry_size(es)   _nvm_b2log(es)
-
-
 
 /*
  * Helper function to allocate a handle container.
@@ -65,8 +62,6 @@ static struct controller* create_handle(struct device* dev, const struct device_
     return handle;
 }
 
-
-
 static void remove_handle(struct controller* handle)
 {
     int status;
@@ -79,8 +74,6 @@ static void remove_handle(struct controller* handle)
 
     free(handle);
 }
-
-
 
 /*
  * Take device reference.
@@ -111,8 +104,6 @@ struct controller* _nvm_ctrl_get(const nvm_ctrl_t* ctrl)
     return NULL;
 }
 
-
-
 /*
  * Release device reference.
  */
@@ -141,8 +132,6 @@ void _nvm_ctrl_put(struct controller* controller)
         }
     }
 }
-
-
 
 int _nvm_ctrl_init(nvm_ctrl_t** handle, struct device* dev, const struct device_ops* ops, enum device_type type,
         volatile void* mm_ptr, size_t mm_size)
@@ -198,8 +187,6 @@ int _nvm_ctrl_init(nvm_ctrl_t** handle, struct device* dev, const struct device_
 
     return 0;
 }
-
-
 
 /*
  * Reset the controller manually.
@@ -264,13 +251,8 @@ int nvm_raw_ctrl_reset(const nvm_ctrl_t* ctrl, uint64_t acq_addr, uint64_t asq_a
         remaining = _nvm_delay_remain(remaining);
     }
 
-    //uint64_t asqaddr = *asq;
-    //uint64_t acqaddr = *acq;
-    //printf("reset: asqaddr: %llx\tacqaddr: %llx\n", asqaddr, acqaddr);
     return 0;
 }
-
-
 
 void nvm_ctrl_free(nvm_ctrl_t* ctrl)
 {
@@ -281,10 +263,7 @@ void nvm_ctrl_free(nvm_ctrl_t* ctrl)
     }
 }
 
-
-
 int nvm_raw_ctrl_init(nvm_ctrl_t** ctrl, volatile void* mm_ptr, size_t mm_size)
 {
     return _nvm_ctrl_init(ctrl, NULL, NULL, DEVICE_TYPE_UNKNOWN, mm_ptr, mm_size);
 }
-

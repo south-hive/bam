@@ -30,7 +30,6 @@
 #include "dprintf.h"
 #include <atomic>
 
-
 /*
  * Local admin queue-pair descriptor.
  */
@@ -42,8 +41,6 @@ struct local_admin
     uint64_t            timeout;    // Controller timeout
 };
 
-
-
 /*
  * Linked list of RPC server-side binding handles.
  */
@@ -54,8 +51,6 @@ struct rpc_handle
     void*               data;       // Custom instance data
     rpc_free_handle_t   release;    // Callback to release the instance data
 };
-
-
 
 /*
  * Administration queue-pair reference.
@@ -73,8 +68,6 @@ struct nvm_admin_reference
     rpc_free_binding_t      release;    // Callback to release instance data
     rpc_stub_t              stub;       // Client-side stub
 };
-
-
 
 int _nvm_rpc_handle_insert(nvm_aq_ref ref, uint32_t key, void* data, rpc_free_handle_t release)
 {
@@ -133,8 +126,6 @@ int _nvm_rpc_handle_insert(nvm_aq_ref ref, uint32_t key, void* data, rpc_free_ha
     return 0;
 }
 
-
-
 void _nvm_rpc_handle_remove(nvm_aq_ref ref, uint32_t key)
 {
     _nvm_mutex_lock(&ref->lock);
@@ -166,8 +157,6 @@ void _nvm_rpc_handle_remove(nvm_aq_ref ref, uint32_t key)
     _nvm_mutex_unlock(&ref->lock);
 }
 
-
-
 /*
  * Helper function to remove all server handles.
  * Lock must be held when calling this.
@@ -192,8 +181,6 @@ static void release_handles(nvm_aq_ref ref)
         ref->handles = NULL;
     }
 }
-
-
 
 /* 
  * Helper function to allocate an admin reference.
@@ -236,8 +223,6 @@ int _nvm_ref_get(nvm_aq_ref* handle, const nvm_ctrl_t* ctrl)
     return 0;
 }
 
-
-
 /* 
  * Helper function to free an admin reference.
  */
@@ -261,8 +246,6 @@ void _nvm_ref_put(nvm_aq_ref ref)
         free(ref);
     }
 }
-
-
 
 /* 
  * Execute an NVM admin command.
@@ -289,9 +272,6 @@ static int execute_command(struct local_admin* admin, const nvm_cmd_t* cmd, nvm_
     *NVM_CMD_CID(&local_copy) = in_queue_id;
     *in_queue_cmd = local_copy;
 
-    //for (int i = 0; i < 16; i++) {
-    //    printf("cmd: %p\tdword[%d] = %x\n", in_queue_cmd, i, local_copy.dword[i]);
-    //}
     std::atomic_thread_fence(std::memory_order_seq_cst);
     // Submit command and wait for completion
     nvm_sq_submit(&admin->asq);
@@ -303,11 +283,6 @@ static int execute_command(struct local_admin* admin, const nvm_cmd_t* cmd, nvm_
         return ETIME;
     }
     std::atomic_thread_fence(std::memory_order_seq_cst);
-    //for (int i = 0; i < 4; i++) {
-    //    printf("cpl: %p\tdword[%d] = %x\n", in_queue_cpl, i, in_queue_cpl->dword[i]);
-
-    //}
-    //printf("cpl cmd_id: %u\tstatus and phase: %x\n", in_queue_cpl->dword[3] & 0x0000ffff, in_queue_cpl->dword[3] >> 16);
 
     nvm_sq_update(&admin->asq);
     std::atomic_thread_fence(std::memory_order_seq_cst);
@@ -316,12 +291,8 @@ static int execute_command(struct local_admin* admin, const nvm_cmd_t* cmd, nvm_
     std::atomic_thread_fence(std::memory_order_seq_cst);
     nvm_cq_update(&admin->acq);
 
-    //*NVM_CPL_CID(cpl) = *NVM_CMD_CID(cmd);
-
     return 0;
 }
-
-
 
 /*
  * Helper function to create a local admin descriptor.
@@ -379,7 +350,6 @@ static int create_admin(struct local_admin** handle, const struct controller* ct
     return 0;
 }
 
-
 /*
  * Helper function to remove an admin descriptor.
  */
@@ -391,8 +361,6 @@ static void remove_admin(struct local_admin* admin)
         free(admin);
     }
 }
-
-
 
 /*
  * Execute admin command using the RPC binding reference.
@@ -422,8 +390,6 @@ int nvm_raw_rpc(nvm_aq_ref ref, nvm_cmd_t* cmd, nvm_cpl_t* cpl)
     return NVM_ERR_PACK(cpl, err);
 }
 
-
-
 /*
  * Bind reference to remote handle.
  */
@@ -452,8 +418,6 @@ int _nvm_rpc_bind(nvm_aq_ref ref, void* data, rpc_free_binding_t release, rpc_st
     _nvm_mutex_unlock(&ref->lock);
     return 0;
 }
-
-
 
 /*
  * Create admin queues locally.
@@ -486,14 +450,10 @@ int nvm_aq_create(nvm_aq_ref* handle, const nvm_ctrl_t* ctrl, const nvm_dma_t* w
     // Reset controller
     const struct local_admin* admin = (const struct local_admin*) ref->data;
     nvm_raw_ctrl_reset(ctrl, admin->qmem->ioaddrs[0], admin->qmem->ioaddrs[1]);
-    //printf("admin sq vaddr: %p\tsq ioaddr: %lx\n", admin->qmem->vaddr, admin->qmem->ioaddrs[0]);
-    //printf("admin cq vaddr: %p\tcq ioaddr: %lx\n", admin->qmem->vaddr+4096, admin->qmem->ioaddrs[1]);
-    
+
     *handle = ref;
     return 0;
 }
-
-
 
 void nvm_aq_destroy(nvm_aq_ref ref)
 {
@@ -502,8 +462,6 @@ void nvm_aq_destroy(nvm_aq_ref ref)
         _nvm_ref_put(ref);
     }
 }
-
-
 
 const nvm_ctrl_t* nvm_ctrl_from_aq_ref(nvm_aq_ref ref)
 {
@@ -514,8 +472,6 @@ const nvm_ctrl_t* nvm_ctrl_from_aq_ref(nvm_aq_ref ref)
 
     return NULL;
 }
-
-
 
 int _nvm_local_admin(nvm_aq_ref ref, const nvm_cmd_t* cmd, nvm_cpl_t* cpl)
 {
@@ -539,16 +495,10 @@ int _nvm_local_admin(nvm_aq_ref ref, const nvm_cmd_t* cmd, nvm_cpl_t* cpl)
     return NVM_ERR_PACK(NULL, err);
 }
 
-
-
 void nvm_rpc_unbind(nvm_aq_ref ref)
 {
     if (ref != NULL)
     {
-        //if (ref->stub != (rpc_stub_t) execute_command)
-        //{
-            _nvm_ref_put(ref);
-        //}
+        _nvm_ref_put(ref);
     }
 }
-

@@ -21,8 +21,6 @@
 #include "lib_ctrl.h"
 #include "dprintf.h"
 
-
-
 /*
  * Device descriptor
  */
@@ -30,8 +28,6 @@ struct device
 {
     int fd; /* ioctl file descriptor */
 };
-
-
 
 /*
  * Unmap controller memory and close file descriptor.
@@ -42,8 +38,6 @@ static void release_device(struct device* dev, volatile void* mm_ptr, size_t mm_
     close(dev->fd);
     free(dev);
 }
-
-
 
 /*
  * Call kernel module ioctl and map memory for DMA.
@@ -87,8 +81,6 @@ static int ioctl_map(const struct device* dev, const struct va_range* va, uint64
     return 0;
 }
 
-
-
 /*
  * Call kernel module ioctl and unmap memory.
  */
@@ -104,8 +96,6 @@ static void ioctl_unmap(const struct device* dev, const struct va_range* va)
         dprintf("Page unmapping kernel request failed: %s\n", strerror(errno));
     }
 }
-
-
 
 int nvm_ctrl_init(nvm_ctrl_t** ctrl, int filedes)
 {
@@ -161,4 +151,3 @@ int nvm_ctrl_init(nvm_ctrl_t** ctrl, int filedes)
 
     return 0;
 }
-
