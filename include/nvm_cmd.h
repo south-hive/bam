@@ -1,9 +1,9 @@
 #ifndef __NVM_COMMAND_H__
 #define __NVM_COMMAND_H__
 
-#ifndef __device__ 
+#ifndef __device__
 #define __device__
-#endif 
+#endif
 #ifndef __host__
 #define __host__
 #endif
@@ -84,7 +84,7 @@ void nvm_cmd_rw_blks(nvm_cmd_t* cmd, uint64_t start_lba, uint16_t n_blks)
  * entry will not be used (so that it can be used to point to the next list).
  * (See Chapter 4.4, Figure 14 in the NVMe specification).
  *
- * Returns the number of PRP entries used. 
+ * Returns the number of PRP entries used.
  */
 __host__ __device__ static inline
 size_t nvm_prp_list(const nvm_prp_list_t* list, size_t n_pages, const uint64_t* ioaddrs)
@@ -191,7 +191,7 @@ size_t nvm_cmd_data(nvm_cmd_t* cmd, size_t n_lists, const nvm_prp_list_t* lists,
     {
         dptr1 = ioaddrs[prp++];
     }
-    
+
     nvm_cmd_data_ptr(cmd, dptr0, dptr1);
     return prp;
 }

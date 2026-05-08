@@ -28,7 +28,7 @@ static int query_device(const struct device* dev, sci_smartio_device_info_t* inf
 {
     sci_error_t err;
     sci_smartio_query_device_t query;
-    
+
     query.fdid = dev->fdid;
     query.subcommand = SCI_Q_DEVICE_INFO;
     query.data = (void*) info;
@@ -50,9 +50,9 @@ int _nvm_device_memory_get(sci_remote_segment_t* segment, const struct device* d
 {
     sci_error_t err;
     sci_remote_segment_t seg = NULL;
-    
+
     *segment = NULL;
-    
+
     SCIConnectDeviceSegment(dev->device, &seg, id, memtype, NULL, NULL, 0, &err);
     if (err == SCI_ERR_OK)
     {
@@ -136,7 +136,7 @@ int _nvm_local_memory_get(sci_local_segment_t* segment, uint32_t* adapter, const
     {
         return status;
     }
-    
+
     // Query result contains one possible adapter to reach device, we'll use that
     adapt = info.adapter;
 
@@ -180,7 +180,7 @@ int _nvm_local_memory_get(sci_local_segment_t* segment, uint32_t* adapter, const
     SCIPrepareSegment(seg, adapt, 0, &err);
     if (err != SCI_ERR_OK)
     {
-        dprintf("Failed to prepare local segment on adapter %u (ptr=%p, size=%zx): %s\n", 
+        dprintf("Failed to prepare local segment on adapter %u (ptr=%p, size=%zx): %s\n",
                 adapt, ptr, size, _SCIGetErrorString(err));
         SCIRemoveSegment(seg, 0, &err);
         return EIO;
@@ -328,7 +328,7 @@ static int borrow_device(struct device** handle, uint32_t fdid)
     }
 
     SCIBorrowDevice(dev->sd, &dev->device, dev->fdid, 0, &err);
-    if (err != SCI_ERR_OK) 
+    if (err != SCI_ERR_OK)
     {
         status = ENODEV;
         dprintf("Failed to increase device reference: %s\n", _SCIGetErrorString(err));
@@ -376,7 +376,7 @@ static int borrow_device(struct device** handle, uint32_t fdid)
         free(dev);
         return ENOSPC;
     }
-    
+
     *handle = dev;
     return 0;
 }
@@ -436,7 +436,7 @@ static int io_map(const struct device* dev, const struct va_range* va, uint64_t*
 static void io_unmap(const struct device* dev, const struct va_range* va)
 {
     sci_error_t err = SCI_ERR_OK;
-    
+
     if (va->remote)
     {
         const struct remote_segment* rs;
@@ -484,7 +484,7 @@ static void io_unmap(const struct device* dev, const struct va_range* va)
 /*
  * Device operations
  */
-static const struct device_ops smartio_device_ops = 
+static const struct device_ops smartio_device_ops =
 {
     .release_device = &return_device,
     .map_range = &io_map,
@@ -497,7 +497,7 @@ int nvm_dis_ctrl_init(nvm_ctrl_t** ctrl, uint32_t fdid)
     struct device* dev;
 
     *ctrl = NULL;
-    
+
     err = borrow_device(&dev, fdid);
     if (err != 0)
     {
@@ -519,7 +519,7 @@ void nvm_dis_ctrl_unmap_p2p_device(const nvm_ctrl_t* ctrl, sci_smartio_device_t 
     if (ctrl != NULL)
     {
         const struct controller* container = _nvm_container_of(ctrl, struct controller, handle);
-            
+
         if (container->device != NULL && container->type == DEVICE_TYPE_SMARTIO)
         {
             sci_error_t err;

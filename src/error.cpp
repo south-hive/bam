@@ -42,7 +42,7 @@ static const char* generic_status[] =
     "Command not supported for queue in CMB"
 };
 
-static const char* generic_status_nvm_commands[] = 
+static const char* generic_status_nvm_commands[] =
 {
     "LBA out of range",
     "Capacity exceeded",
@@ -51,7 +51,7 @@ static const char* generic_status_nvm_commands[] =
     "Format in progress"
 };
 
-static const char* command_specific_status[] = 
+static const char* command_specific_status[] =
 {
     "Completion queue invalid",
     "Invalid queue identifier",
@@ -97,7 +97,7 @@ static const char* command_specific_status_nvm_commands[] =
     "Attempted write to read only range"
 };
 
-static const char* media_and_data_integrity_nvm_commands[] = 
+static const char* media_and_data_integrity_nvm_commands[] =
 {
     "Write fault",
     "Unrecovered read error",

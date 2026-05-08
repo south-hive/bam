@@ -55,7 +55,7 @@ struct rpc_handle
 /*
  * Administration queue-pair reference.
  *
- * Represents either a reference to a remote descriptor, or is a local 
+ * Represents either a reference to a remote descriptor, or is a local
  * descriptor. In other words, this handle represents both RPC clients and
  * RPC servers.
  */
@@ -182,7 +182,7 @@ static void release_handles(nvm_aq_ref ref)
     }
 }
 
-/* 
+/*
  * Helper function to allocate an admin reference.
  */
 int _nvm_ref_get(nvm_aq_ref* handle, const nvm_ctrl_t* ctrl)
@@ -223,7 +223,7 @@ int _nvm_ref_get(nvm_aq_ref* handle, const nvm_ctrl_t* ctrl)
     return 0;
 }
 
-/* 
+/*
  * Helper function to free an admin reference.
  */
 void _nvm_ref_put(nvm_aq_ref ref)
@@ -238,7 +238,7 @@ void _nvm_ref_put(nvm_aq_ref ref)
         {
             ref->release(ref->data);
         }
-        
+
         _nvm_ctrl_put(ref->ctrl);
         _nvm_mutex_unlock(&ref->lock);
 
@@ -247,7 +247,7 @@ void _nvm_ref_put(nvm_aq_ref ref)
     }
 }
 
-/* 
+/*
  * Execute an NVM admin command.
  * Lock must be held when calling this function.
  */
@@ -338,10 +338,10 @@ static int create_admin(struct local_admin** handle, const struct controller* ct
     admin->qmem = copy;
     memset((void*) admin->qmem->vaddr, 0, 2 * admin->qmem->page_size);
 
-    nvm_queue_clear(&admin->acq, &ctrl->handle, true, 0, ctrl->handle.page_size / sizeof(nvm_cpl_t), 
+    nvm_queue_clear(&admin->acq, &ctrl->handle, true, 0, ctrl->handle.page_size / sizeof(nvm_cpl_t),
             admin->qmem->local, admin->qmem->vaddr, admin->qmem->ioaddrs[0]);
 
-    nvm_queue_clear(&admin->asq, &ctrl->handle, false, 0, ctrl->handle.page_size / sizeof(nvm_cmd_t), 
+    nvm_queue_clear(&admin->asq, &ctrl->handle, false, 0, ctrl->handle.page_size / sizeof(nvm_cmd_t),
             admin->qmem->local,  NVM_DMA_OFFSET(admin->qmem, 1), admin->qmem->ioaddrs[1]);
 
     admin->timeout = ctrl->handle.timeout;
@@ -482,7 +482,7 @@ int _nvm_local_admin(nvm_aq_ref ref, const nvm_cmd_t* cmd, nvm_cpl_t* cpl)
         return NVM_ERR_PACK(NULL, err);
     }
 
-    if (ref->stub != (rpc_stub_t) execute_command) 
+    if (ref->stub != (rpc_stub_t) execute_command)
     {
         _nvm_mutex_unlock(&ref->lock);
         dprintf("Reference is not local descriptor\n");

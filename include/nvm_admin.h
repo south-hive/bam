@@ -14,7 +14,7 @@ int nvm_admin_ctrl_info(nvm_aq_ref ref,               // AQ pair reference
                         void* buffer,                 // Temporary buffer (must be at least 4 KB)
                         uint64_t ioaddr);             // Bus address of buffer as seen by the controller
 
-/* 
+/*
  * Get namespace information.
  */
 int nvm_admin_ns_info(nvm_aq_ref ref,                 // AQ pair reference
@@ -84,18 +84,18 @@ int nvm_admin_sq_create(nvm_aq_ref ref,                 // AQ pair reference
  * Delete IO submission queue (SQ)
  * After calling this, the queue is no longer used and must be recreated.
  */
-int nvm_admin_sq_delete(nvm_aq_ref ref, 
-                        nvm_queue_t* sq, 
+int nvm_admin_sq_delete(nvm_aq_ref ref,
+                        nvm_queue_t* sq,
                         const nvm_queue_t* cq);
 
 /*
  * Get log page.
  */
-int nvm_admin_get_log_page(nvm_aq_ref ref, 
-                           uint32_t ns_id, 
-                           void* ptr, 
-                           uint64_t ioaddr, 
-                           uint8_t log_id, 
+int nvm_admin_get_log_page(nvm_aq_ref ref,
+                           uint32_t ns_id,
+                           void* ptr,
+                           uint64_t ioaddr,
+                           uint8_t log_id,
                            uint64_t log_offset);
 
 #endif /* #ifdef __NVM_ADMIN_H__ */

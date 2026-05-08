@@ -67,7 +67,6 @@ static inline uint64_t _nvm_delay_remain(uint64_t remaining_nanoseconds)
 }
 #endif
 
-
 #if defined( __unix__ )
 /* Get the system page size */
 static inline size_t _nvm_host_page_size()
@@ -87,6 +86,5 @@ static inline size_t _nvm_host_page_size()
 #else
 #define _nvm_host_page_size()   0x1000
 #endif
-
 
 #endif /* __NVM_INTERNAL_UTIL_H__ */

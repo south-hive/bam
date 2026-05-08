@@ -39,14 +39,14 @@ static struct controller* create_handle(struct device* dev, const struct device_
     }
 
     memset(&handle->handle, 0, sizeof(nvm_ctrl_t));
-   
+
     err = _nvm_mutex_init(&handle->lock);
     if (err != 0)
     {
         free(handle);
         return NULL;
     }
-    
+
     handle->count = 1;
     handle->device = dev;
     handle->type = type;
@@ -222,7 +222,7 @@ int nvm_raw_ctrl_reset(const nvm_ctrl_t* ctrl, uint64_t acq_addr, uint64_t asq_a
     uint32_t cq_max_entries = ctrl->page_size / sizeof(nvm_cpl_t) - 1;
     uint32_t sq_max_entries = ctrl->page_size / sizeof(nvm_cmd_t) - 1;
     *aqa = AQA$ACQS(cq_max_entries) | AQA$ASQS(sq_max_entries);
-    
+
     // Set admin completion queue
     volatile uint64_t* acq = ACQ(ctrl->mm_ptr);
     *acq = acq_addr;
@@ -232,8 +232,8 @@ int nvm_raw_ctrl_reset(const nvm_ctrl_t* ctrl, uint64_t acq_addr, uint64_t asq_a
     *asq = asq_addr;
     std::atomic_thread_fence(std::memory_order_seq_cst);
     // Set CC.MPS to pagesize and CC.EN to 1
-    uint32_t cqes = encode_entry_size(sizeof(nvm_cpl_t)); 
-    uint32_t sqes = encode_entry_size(sizeof(nvm_cmd_t)); 
+    uint32_t cqes = encode_entry_size(sizeof(nvm_cpl_t));
+    uint32_t sqes = encode_entry_size(sizeof(nvm_cmd_t));
     *cc = CC$IOCQES(cqes) | CC$IOSQES(sqes) | CC$MPS(encode_page_size(ctrl->page_size)) | CC$CSS(0) | CC$EN(1);
     std::atomic_thread_fence(std::memory_order_seq_cst);
     // Wait for CSTS.RDY to transition from 0 to 1

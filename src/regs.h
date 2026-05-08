@@ -4,7 +4,6 @@
 #include <nvm_util.h>
 #include <stdint.h>
 
-
 /* Controller registers */
 #define CAP(p)          _REG(p, 0x0000, 64)     // Controller Capabilities
 #define VER(p)          _REG(p, 0x0008, 32)     // NVM Express version
@@ -13,7 +12,6 @@
 #define AQA(p)          _REG(p, 0x0024, 32)     // Admin Queue Attributes
 #define ASQ(p)          _REG(p, 0x0028, 64)     // Admin Submission Queue Base Address
 #define ACQ(p)          _REG(p, 0x0030, 64)     // Admin Completion Queue Base Address
-
 
 /* Read bit fields */
 #define CAP$MPSMAX(p)   _RB(*CAP(p), 55, 52)    // Memory Page Size Maximum
@@ -25,7 +23,6 @@
 
 #define CSTS$RDY(p)     _RB(*CSTS(p), 0,  0)    // Ready indicator
 
-
 /* Write bit fields */
 #define CC$IOCQES(v)    _WB(v, 23, 20)          // IO Completion Queue Entry Size
 #define CC$IOSQES(v)    _WB(v, 19, 16)          // IO Submission Queue Entry Size
@@ -36,11 +33,9 @@
 #define AQA$ACQS(v)     _WB(v, 27, 16)          // Admin Completion Queue Size
 #define AQA$ASQS(v)     _WB(v, 11,  0)          // Admin Submission Queue Size
 
-
 /* SQ doorbell register offset */
 #define SQ_DBL(p, y, dstrd)    \
         ((volatile uint32_t*) (((volatile unsigned char*) (p)) + 0x1000 + ((2*(y)) * (4 << (dstrd)))) )
-
 
 /* CQ doorbell register offset */
 #define CQ_DBL(p, y, dstrd)    \

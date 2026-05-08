@@ -108,7 +108,7 @@ static void remove_map(struct map* md)
 }
 
 /*
- * Helper function to initialize DMA handle members and 
+ * Helper function to initialize DMA handle members and
  * populate bus address list.
  */
 static void populate_handle(nvm_dma_t* handle, const struct va_range* va, const nvm_ctrl_t* ctrl, const uint64_t* ioaddrs)
@@ -232,7 +232,7 @@ static int create_container(struct container** container, struct map* md)
 {
     *container = NULL;
     const struct controller* ctrl = md->ctrl;
-    
+
     size_t page_size = md->va->page_size;
     size_t n_pages = md->va->n_pages;
 
@@ -274,7 +274,7 @@ static void remove_container(struct container* container)
 }
 
 /*
- * Create and initialize a DMA handle, and map a virtual address range 
+ * Create and initialize a DMA handle, and map a virtual address range
  * for the controller.
  */
 int _nvm_dma_init(nvm_dma_t** handle, const nvm_ctrl_t* ctrl, struct va_range* va, va_range_free_t release)
@@ -353,7 +353,7 @@ int nvm_dma_map(nvm_dma_t** handle, const nvm_ctrl_t* ctrl, void* vaddr, size_t 
         free(va);
         return status;
     }
-    
+
     // Create DMA handle container
     status = create_container(&container, map);
     if (status != 0)
@@ -377,7 +377,7 @@ int nvm_dma_remap(nvm_dma_t** handle, const nvm_dma_t* other)
     struct container* container;
     struct map* map = _nvm_container_of(other, struct container, handle)->map;
     struct va_range va;
-   
+
     *handle = NULL;
 
     // Increase mapping descriptor reference count
@@ -401,7 +401,7 @@ int nvm_dma_remap(nvm_dma_t** handle, const nvm_dma_t* other)
     va.vaddr = map->va->vaddr;
     va.page_size = other->page_size;
     va.n_pages = other->n_ioaddrs;
-    
+
     populate_handle(&container->handle, &va, &map->ctrl->handle, other->ioaddrs);
     *handle = &container->handle;
 

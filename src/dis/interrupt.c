@@ -18,8 +18,8 @@
 
 /*
  * Do some sanity checking and then call supplied callback.
- */ 
-static sci_callback_action_t interrupt_callback(struct local_intr* interrupt, 
+ */
+static sci_callback_action_t interrupt_callback(struct local_intr* interrupt,
                                                 sci_local_data_interrupt_t intr,
                                                 void* data,
                                                 uint32_t length,
@@ -71,7 +71,7 @@ int _nvm_local_intr_get(struct local_intr* intr, uint32_t adapter, void* cb_data
     intr->adapter = adapter;
     intr->data = cb_data;
     intr->callback = cb;
-    
+
     uint32_t flags = 0;
     void* data = NULL;
     sci_cb_data_interrupt_t callback = NULL;
@@ -113,7 +113,7 @@ int _nvm_local_intr_wait(struct local_intr* intr, void* data, uint16_t maxlen, u
 {
     sci_error_t err = SCI_ERR_OK;
     uint32_t len = maxlen;
-    
+
     SCIWaitForDataInterrupt(intr->intr, data, &len, timeout, 0, &err);
 
     switch (err)

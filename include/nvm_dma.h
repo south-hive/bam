@@ -14,14 +14,14 @@
  * Create DMA mapping descriptor from physical/bus addresses.
  *
  * Create a DMA mapping descriptor, describing a region of memory that is
- * accessible for the NVM controller. The caller must supply physical/bus  
+ * accessible for the NVM controller. The caller must supply physical/bus
  * addresses of physical memory pages, page size and total number of pages.
  * As the host's page size may differ from the controller's page size (MPS),
  * this function will calculate the necessary offsets into the actual memory
  * pages.
  *
  * While virtual memory is assumed to be continuous, the physical pages do not
- * need to be contiguous. Physical/bus addresses must be aligned to the 
+ * need to be contiguous. Physical/bus addresses must be aligned to the
  * controller's page size.
  *
  * Note: vaddr can be NULL.
@@ -34,7 +34,7 @@ int nvm_dma_map(nvm_dma_t** map,                // Mapping descriptor reference
                 const uint64_t* page_addrs);    // List of physical/bus addresses to the pages
 
 /*
- * Create DMA mapping descriptor using offsets from a previously 
+ * Create DMA mapping descriptor using offsets from a previously
  * created DMA descriptor.
  */
 int nvm_dma_remap(nvm_dma_t** new_map, const nvm_dma_t* other_map);
@@ -50,7 +50,7 @@ void nvm_dma_unmap(nvm_dma_t* map);
 /*
  * Create DMA mapping descriptor from virtual address using the kernel module.
  * This function is similar to nvm_dma_map, except the user is not required
- * to pass physical/bus addresses. 
+ * to pass physical/bus addresses.
  *
  * Note: vaddr can not be NULL, and must be aligned to system page size.
  */
@@ -73,13 +73,13 @@ int nvm_dma_map_device(nvm_dma_t** map, const nvm_ctrl_t* ctrl, void* devptr, si
 /*
  * Create DMA mapping descriptor from local SISCI segment.
  *
- * Create DMA mapping descriptor from a local segment handler, and 
+ * Create DMA mapping descriptor from a local segment handler, and
  * reverse-map the segment making it accessible from the controller.
  * As segment memory is always continuous and page-aligned, it is not
  * necessary to calculate physical memory addresses. However, the user
  * should ensure that the mapping size is aligned to a controller
  * page-size (MPS).
- * 
+ *
  * The controller handle must have been created using SmartIO, and
  * the segment must already be prepared on the local adapter.
  */
@@ -96,7 +96,7 @@ int nvm_dis_dma_map_local(nvm_dma_t** map,              // Mapping descriptor re
 /*
  * Create DMA mapping descriptor from remote SISCI segment.
  *
- * Create DMA mapping descriptor from a remote segment handler, and 
+ * Create DMA mapping descriptor from a remote segment handler, and
  * reverse-map the segment making it accessible from the controller.
  * This function is similar to nvm_dis_dma_map_local.
  *
@@ -114,8 +114,8 @@ int nvm_dis_dma_map_remote(nvm_dma_t** map,             // Mapping descriptor re
 #endif /* __DIS_CLUSTER__ */
 
 #if ( !defined( __CUDA__ ) && !defined( __CUDACC__ ) ) && ( defined (__unix__) )
-/* 
- * Short-hand function for allocating a page aligned buffer and mapping it 
+/*
+ * Short-hand function for allocating a page aligned buffer and mapping it
  * for the controller.
  *
  * Note: this function will not work if you are using the CUDA API

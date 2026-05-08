@@ -24,7 +24,7 @@
 #include <sisci_error.h>
 #include <sisci_api.h>
 
-/* 
+/*
  * Map local segment into virtual address space.
  */
 static int va_map_local(struct va_map* m, struct va_range* va, sci_local_segment_t segment, bool write)
@@ -62,7 +62,7 @@ static int va_map_local(struct va_map* m, struct va_range* va, sci_local_segment
     }
 }
 
-/* 
+/*
  * Map remote segment into virtual address space.
  */
 static int va_map_remote(struct va_map* m, struct va_range* va, sci_remote_segment_t segment, bool write, bool wc)
@@ -395,7 +395,7 @@ static int create_local_segment(struct va_range** va, const nvm_ctrl_t* ctrl, si
 
     // Indicate that we need cleaning up
     ls->remove = true;
-    
+
     // Map local segment into virtual address space unless it's physical memory
     if (ptr == NULL)
     {
@@ -604,7 +604,7 @@ uint32_t nvm_dis_node_from_dma(const nvm_dma_t* handle)
         {
             return 0;
         }
-       
+
         va = _nvm_dma_va(handle);
         if (va == NULL || va->n_pages != 1)
         {

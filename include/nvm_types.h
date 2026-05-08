@@ -5,11 +5,11 @@
 #include <stdint.h>
 #include <simt/atomic>
 
-#ifndef __align__ 
+#ifndef __align__
 #define __align__(x)
 #endif
 
-/* 
+/*
  * NVM controller handle.
  *
  * Note: This structure will be allocated by the API and needs to be
@@ -30,7 +30,7 @@ typedef struct
  *
  * As only a single process can be responsible of resetting the controller and
  * setting administration queues, this structure represents a remote handle to
- * that process. It is used as a descriptor for executing RPC calls to the 
+ * that process. It is used as a descriptor for executing RPC calls to the
  * remote process owning the admin queues.
  *
  * Note: This structure will be allocated by the API and needs to be released
@@ -80,9 +80,9 @@ typedef struct __align__(32)
 /*
  * NVM queue descriptor.
  *
- * This structure represents an NVM IO queue and holds information 
- * about memory addresses, queue entries as well as a memory mapped pointer to 
- * the device doorbell register. Maximum queue size is limited to a single 
+ * This structure represents an NVM IO queue and holds information
+ * about memory addresses, queue entries as well as a memory mapped pointer to
+ * the device doorbell register. Maximum queue size is limited to a single
  * page.
  *
  * Note: This descriptor represents both completion and submission queues.
@@ -137,18 +137,18 @@ typedef struct __align__(32)
     uint64_t                ioaddr;         // Physical/IO address of memory page
 } __attribute__((aligned (32))) nvm_prp_list_t;
 
-/* 
- * NVM completion queue entry type (16 bytes) 
+/*
+ * NVM completion queue entry type (16 bytes)
  */
-typedef struct __align__(16) 
+typedef struct __align__(16)
 {
     volatile uint32_t                dword[4];       // The name DWORD is chosen to reflect the specification
 } __attribute__((aligned (16))) nvm_cpl_t;
 
-/* 
- * NVM command queue entry type (64 bytes) 
+/*
+ * NVM command queue entry type (64 bytes)
  */
-typedef struct __align__(64) 
+typedef struct __align__(64)
 {
     uint32_t                dword[16];
 } __attribute__((aligned (64))) nvm_cmd_t;

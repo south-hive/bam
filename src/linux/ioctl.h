@@ -25,6 +25,5 @@ enum nvm_ioctl_type
     NVM_UNMAP_MEMORY            = _IOW(NVM_IOCTL_TYPE, 3, uint64_t)
 };
 
-
 #endif /* __linux__ */
 #endif /* __NVM_INTERNAL_LINUX_IOCTL_H__ */

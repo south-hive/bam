@@ -8,8 +8,7 @@
 #include "lib_util.h"
 #include <simt/atomic>
 
-
-int nvm_queue_clear(nvm_queue_t* queue, const nvm_ctrl_t* ctrl, bool cq, uint16_t no, uint32_t qs, 
+int nvm_queue_clear(nvm_queue_t* queue, const nvm_ctrl_t* ctrl, bool cq, uint16_t no, uint32_t qs,
         bool local, volatile void* vaddr, uint64_t ioaddr)
 {
     if (qs < 2 || qs > 0x10000 || qs > ctrl->max_qs)

@@ -163,7 +163,7 @@ int nvm_admin_ns_info(nvm_aq_ref ref, struct nvm_ns_info* info, uint32_t ns_id, 
         dprintf("Identify namespace failed: %s\n", nvm_strerror(err));
         return err;
     }
-    
+
     nvm_cache_invalidate(ptr, 0x1000);
 
     const unsigned char* bytes = (const unsigned char*) ptr;
@@ -199,7 +199,7 @@ int nvm_admin_get_log_page(nvm_aq_ref ref, uint32_t ns_id, void* ptr, uint64_t i
         dprintf("Get log page failed: %s\n", nvm_strerror(err));
         return err;
     }
-    
+
     nvm_cache_invalidate(ptr, 0x1000);
 
     return NVM_ERR_PACK(NULL, 0);

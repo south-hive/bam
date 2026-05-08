@@ -24,7 +24,7 @@ void nvm_rpc_unbind(nvm_aq_ref ref);
  * Relay NVM admin command.
  *
  * Use a local AQ pair reference to relay a NVM admin command to ASQ and get
- * a corresponding completion from the ACQ. This function will block until 
+ * a corresponding completion from the ACQ. This function will block until
  * either a timeout occurs or until the command is completed.
  *
  * Return value:

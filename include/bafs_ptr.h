@@ -1,13 +1,13 @@
 #ifndef __BAFS_PTR_H__
 #define __BAFS_PTR_H__
 
-#ifndef __device__ 
+#ifndef __device__
 #define __device__
-#endif 
+#endif
 #ifndef __host__
 #define __host__
 #endif
-#ifndef __forceinline__  
+#ifndef __forceinline__
 #define __forceinline__ inline
 #endif
 

@@ -25,7 +25,7 @@ __host__ __device__
 static inline
 void _nvm_cache_flush(void* ptr, size_t size)
 {
-#ifndef __CUDA_ARCH__ 
+#ifndef __CUDA_ARCH__
     sci_error_t err;
     SCICacheSync(NULL, ptr, size, SCI_FLAG_CACHE_FLUSH, &err);
 #endif
@@ -43,7 +43,7 @@ __host__ __device__
 static inline
 void _nvm_cache_invalidate(void* ptr, size_t size)
 {
-#ifndef __CUDA_ARCH__ 
+#ifndef __CUDA_ARCH__
     sci_error_t err;
     SCICacheSync(NULL, ptr, size, SCI_FLAG_CACHE_FLUSH | SCI_FLAG_CACHE_INVALIDATE, &err);
 #endif
@@ -88,7 +88,6 @@ void _nvm_wcb_flush()
  */
 #define NVM_PAGE_TO_BLOCK(page_size, block_size, pageno)    \
     (((page_size) * (pageno)) / (block_size))
-    
 
 /*
  * Calculate page number from block number.
@@ -151,14 +150,14 @@ void _nvm_wcb_flush()
     NVM_PTR_OFFSET((dma_ptr)->vaddr, (dma_ptr)->page_size, (pageno))
 
 /*
- * Calculate number of pages needed for a 
+ * Calculate number of pages needed for a
  * submission queue (SQ) with a given size.
  */
 #define NVM_SQ_PAGES(ctrl_ptr, qs) \
     ((((uint16_t) ((qs) - 1))* sizeof(nvm_cmd_t)) / (ctrl_ptr)->page_size + 1)
 
 /*
- * Calculate number of pages needed for a 
+ * Calculate number of pages needed for a
  * completion queue (CQ) with a given size.
  */
 #define NVM_CQ_PAGES(ctrl_ptr, qs) \

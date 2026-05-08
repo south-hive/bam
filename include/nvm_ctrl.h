@@ -10,7 +10,7 @@
 #include <sisci_types.h>
 #endif
 
-/* 
+/*
  * Minimum size of mapped controller memory.
  */
 #define NVM_CTRL_MEM_MINSIZE                        0x2000
@@ -19,7 +19,7 @@
 /*
  * Initialize NVM controller handle.
  *
- * Read from controller registers and initialize controller handle. 
+ * Read from controller registers and initialize controller handle.
  * This function should be used when using the kernel module or to manually
  * read from sysfs.
  *
@@ -28,7 +28,7 @@
 int nvm_ctrl_init(nvm_ctrl_t** ctrl, int fd);
 #endif
 
-/* 
+/*
  * Initialize NVM controller handle.
  *
  * Read from controller registers and initialize the controller handle using
@@ -47,11 +47,11 @@ int nvm_raw_ctrl_init(nvm_ctrl_t** ctrl, volatile void* mm_ptr, size_t mm_size);
  */
 void nvm_ctrl_free(nvm_ctrl_t* ctrl);
 
-/* 
+/*
  * Reset NVM controller.
  *
  * The queue memory must be memset to zero and be exactly one page size large.
- * IO addresses must align to the controller page size. 
+ * IO addresses must align to the controller page size.
  *
  * Note: The controller must be unbound from any driver before attempting to
  *       reset the controller.
@@ -62,10 +62,10 @@ void nvm_ctrl_free(nvm_ctrl_t* ctrl);
 int nvm_raw_ctrl_reset(const nvm_ctrl_t* ctrl, uint64_t acq_ioaddr, uint64_t asq_ioaddr);
 
 #ifdef __DIS_CLUSTER__
-/* 
+/*
  * Initialize NVM controller handle.
  *
- * Read from device registers and initialize controller handle. 
+ * Read from device registers and initialize controller handle.
  * This function should be used when SmartIO is being used.
  */
 int nvm_dis_ctrl_init(nvm_ctrl_t** ctrl, uint32_t smartio_fdid);

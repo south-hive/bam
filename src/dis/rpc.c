@@ -101,7 +101,7 @@ static void handle_remote_command(struct binding_handle* handle, struct rpc_cmd*
         dprintf("Got unexpected data in RPC binding handle\n");
         return;
     }
-    
+
     // Allow user callback to modify request in place
     if ( handle->rpc_cb == NULL || handle->rpc_cb((nvm_cmd_t*) &request->cmd, adapter, node_id) )
     {
@@ -145,9 +145,9 @@ static int remote_command(struct binding* binding, nvm_cmd_t* cmd, nvm_cpl_t* cp
         return NVM_ERR_PACK(NULL, status);
     }
 
-    // XXX: Can a race condition occur here? 
+    // XXX: Can a race condition occur here?
     // XXX: Maybe create interrupt with callback instead and wait for cond var here?
-    
+
     // Wait for callback interrupt
     status = _nvm_local_intr_wait(&binding->lintr, &reply, sizeof(reply), RPC_COMMAND_TIMEOUT);
     if (status != 0)
@@ -161,7 +161,7 @@ static int remote_command(struct binding* binding, nvm_cmd_t* cmd, nvm_cpl_t* cp
     return NVM_ERR_PACK(NULL, 0);
 }
 
-/* 
+/*
  * Helper function to write info about a handle.
  */
 static int write_handle_info(const struct binding_handle* handle, uint32_t adapter, bool clear)
@@ -204,7 +204,7 @@ static int try_create(sci_remote_segment_t* segment, const struct device* dev)
     int status;
     sci_remote_segment_t rseg;
     unsigned adapter = 0;
-    
+
     *segment = NULL;
 
     // Try to connect to segment (and create it if that fails)
@@ -213,7 +213,7 @@ static int try_create(sci_remote_segment_t* segment, const struct device* dev)
     {
         sci_error_t err;
 
-        SCICreateDeviceSegment(dev->device, 0, sizeof(struct handle_info) * N_ADAPTERS, 
+        SCICreateDeviceSegment(dev->device, 0, sizeof(struct handle_info) * N_ADAPTERS,
                 SCI_MEMTYPE_SHARED, SCI_MEMACCESS_HOST_WRITE | SCI_MEMACCESS_MULTIHOST_READ, 0, &err);
 
         switch (err)
@@ -257,7 +257,7 @@ static int try_create(sci_remote_segment_t* segment, const struct device* dev)
 
     *segment = rseg;
     return 0;
-}   
+}
 
 /*
  * Helper function to create a a server binding handle.
@@ -300,7 +300,7 @@ static int create_binding_handle(struct binding_handle** handle, nvm_aq_ref ref,
     bh->segment = rseg;
     bh->rpc_ref = ref;
     bh->rpc_cb = cb;
-    
+
     status = _nvm_local_intr_get(&bh->intr, adapter, bh, (intr_callback_t) handle_remote_command);
     if (status != 0)
     {
@@ -424,7 +424,7 @@ static int create_binding(struct binding** handle, const struct device* dev, uin
 }
 
 /*
- * Helper function to disconnect from remote interrupt and 
+ * Helper function to disconnect from remote interrupt and
  * shared device memory.
  */
 static void remove_binding(struct binding* binding)
@@ -458,7 +458,7 @@ int nvm_dis_rpc_enable(nvm_aq_ref ref, uint32_t adapter, nvm_dis_rpc_cb_t filter
         remove_binding_handle(adapter, handle);
         return err;
     }
-    
+
     return 0;
 }
 

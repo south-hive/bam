@@ -366,10 +366,10 @@ struct bam_ptr {
         }
         return addr[i-start];
     }
-    
+
     __host__ __device__
     T* memref(size_t i) {
-        T* ret_; 
+        T* ret_;
         if ((i < start) || (i >= end)) {
            ret_ =  update_page(i);
         }
@@ -1411,13 +1411,13 @@ struct array_t {
         cuda_err_chk(cudaMemcpy(rdt.data(), adt.d_ranges, adt.n_ranges*sizeof(range_d_t<T>), cudaMemcpyDeviceToHost));
         for (size_t i = 0; i < adt.n_ranges; i++) {
 
-            std::cout << std::dec << "#READ IOs: "  << rdt[i].read_io_cnt 
+            std::cout << std::dec << "#READ IOs: "  << rdt[i].read_io_cnt
                                   << "\t#Accesses:" << rdt[i].access_cnt
-                                  << "\t#Misses:"   << rdt[i].miss_cnt 
+                                  << "\t#Misses:"   << rdt[i].miss_cnt
                                   << "\tMiss Rate:" << ((float)rdt[i].miss_cnt/rdt[i].access_cnt)
-                                  << "\t#Hits: "    << rdt[i].hit_cnt 
-                                  << "\tHit Rate:"  << ((float)rdt[i].hit_cnt/rdt[i].access_cnt) 
-                                  << "\tCLSize:"    << rdt[i].page_size 
+                                  << "\t#Hits: "    << rdt[i].hit_cnt
+                                  << "\tHit Rate:"  << ((float)rdt[i].hit_cnt/rdt[i].access_cnt)
+                                  << "\tCLSize:"    << rdt[i].page_size
                                   << std::endl;
             std::cout << "*********************************" << std::endl;
             rdt[i].read_io_cnt = 0;

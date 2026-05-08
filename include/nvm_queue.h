@@ -1,9 +1,9 @@
 #ifndef __NVM_QUEUE_H__
 #define __NVM_QUEUE_H__
 
-#ifndef __device__ 
+#ifndef __device__
 #define __device__
-#endif 
+#endif
 #ifndef __host__
 #define __host__
 #endif
@@ -17,7 +17,7 @@
 /*
  * Clear queue descriptor.
  *
- * Initialize an empty queue descriptor. 
+ * Initialize an empty queue descriptor.
  * The user must clear the queue memory manually before using the handle.
  *
  * Note: vaddr must be page-aligned and at least one page.
@@ -46,9 +46,9 @@ int nvm_queue_clear(nvm_queue_t* q,            // NVM queue descriptor
 __host__
 void nvm_queue_reset(nvm_queue_t* q);
 
-/* 
+/*
  * Enqueue a submission command.
- * 
+ *
  * Enqueue a submission command in the specified SQ and return a pointer to
  * the queue slot in order to build the command inline in queue memory.
  *
@@ -84,12 +84,12 @@ nvm_cmd_t* nvm_sq_enqueue(nvm_queue_t* sq)
  * position calculation.
  *
  * It is therefore important that all completions are consumed before clling
- * this function. 
+ * this function.
  *
  * The reason for this is to avoid unecessary thread-synchronisation/barriers.
  *
  * Note: n must be less than the queue size
- * 
+ *
  * Note: The pointer should be stored and used as the last parameter for the
  *       succeeding call.
  */
@@ -133,7 +133,7 @@ nvm_cmd_t* nvm_sq_enqueue_n(nvm_queue_t* sq, nvm_cmd_t* last, uint16_t n, uint16
 }
 #endif
 
-/* 
+/*
  * Poll completion queue.
  *
  * Check the head of a completion queue for a new entry. The caller must
@@ -148,7 +148,7 @@ nvm_cpl_t* nvm_cq_poll(const nvm_queue_t* cq)
     nvm_cpl_t* cpl = (nvm_cpl_t*) (((unsigned char*) cq->vaddr) + cq->es * cq->head);
 
 #ifndef __CUDA_ARCH__
-    if (cq->local) 
+    if (cq->local)
     {
         nvm_cache_invalidate((void*) cpl, sizeof(nvm_cpl_t));
     }
@@ -163,7 +163,7 @@ nvm_cpl_t* nvm_cq_poll(const nvm_queue_t* cq)
     return cpl;
 }
 
-/* 
+/*
  * Dequeue completion queue entry.
  *
  * Dequeue a completion entry from the completion queue. If there is no ready
@@ -191,12 +191,12 @@ nvm_cpl_t* nvm_cq_dequeue(nvm_queue_t* cq)
     return cpl;
 }
 
-/* 
+/*
  * Dequeue completion queue entry.
  *
  * Dequeue a completion entry from the completion queue. If none are ready
  * at the time, this function will block until a controller timeout interval
- * or a ready completion. 
+ * or a ready completion.
  *
  * Returns a pointer to the completion entry, or NULL if the queue is empty or
  * on timeout.
@@ -205,7 +205,7 @@ nvm_cpl_t* nvm_cq_dequeue(nvm_queue_t* cq)
 __host__
 nvm_cpl_t* nvm_cq_dequeue_block(nvm_queue_t* cq, uint64_t timeout);
 
-/* 
+/*
  * Update SQ tail pointer.
  *
  * Submit all enqueued commands by ringing the doorbell.
@@ -223,9 +223,9 @@ void nvm_sq_submit(nvm_queue_t* sq)
             // TODO: only flush the actual entries
             nvm_cache_flush((void*) sq->vaddr, sq->es * sq->qs);
         }
-        else 
+        else
         {
-            nvm_wcb_flush(); 
+            nvm_wcb_flush();
         }
 #endif
 
@@ -234,7 +234,7 @@ void nvm_sq_submit(nvm_queue_t* sq)
     }
 }
 
-/* 
+/*
  * Update SQ head pointer.
  */
 __host__ __device__ static inline
@@ -247,7 +247,7 @@ void nvm_sq_update(nvm_queue_t* sq)
     }
 }
 
-/* 
+/*
  * Update controller's CQ head pointer.
  *
  * Indicate that all completions are processed by ringing the doorbell.

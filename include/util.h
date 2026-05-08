@@ -1,9 +1,9 @@
 #ifndef __UTIL_H__
 #define __UTIL_H__
 
-#ifndef __device__ 
+#ifndef __device__
 #define __device__
-#endif 
+#endif
 #ifndef __host__
 #define __host__
 #endif
