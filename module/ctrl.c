@@ -7,8 +7,6 @@
 #include <linux/slab.h>
 #include <asm/errno.h>
 
-
-
 struct ctrl* ctrl_get(struct list* list, struct class* cls, struct pci_dev* pdev, int number)
 {
     struct ctrl* ctrl = NULL;
@@ -36,8 +34,6 @@ struct ctrl* ctrl_get(struct list* list, struct class* cls, struct pci_dev* pdev
     return ctrl;
 }
 
-
-
 void ctrl_put(struct ctrl* ctrl)
 {
     if (ctrl != NULL)
@@ -47,8 +43,6 @@ void ctrl_put(struct ctrl* ctrl)
         kfree(ctrl);
     }
 }
-
-
 
 struct ctrl* ctrl_find_by_pci_dev(const struct list* list, const struct pci_dev* pdev)
 {
@@ -70,8 +64,6 @@ struct ctrl* ctrl_find_by_pci_dev(const struct list* list, const struct pci_dev*
     return NULL;
 }
 
-
-
 struct ctrl* ctrl_find_by_inode(const struct list* list, const struct inode* inode)
 {
     const struct list_node* element = list_next(&list->head);
@@ -91,8 +83,6 @@ struct ctrl* ctrl_find_by_inode(const struct list* list, const struct inode* ino
 
     return NULL;
 }
-
-
 
 int ctrl_chrdev_create(struct ctrl* ctrl, dev_t first, const struct file_operations* fops)
 {
@@ -131,8 +121,6 @@ int ctrl_chrdev_create(struct ctrl* ctrl, dev_t first, const struct file_operati
     return 0;
 }
 
-
-
 void ctrl_chrdev_remove(struct ctrl* ctrl)
 {
     if (ctrl->chrdev != NULL)
@@ -145,4 +133,3 @@ void ctrl_chrdev_remove(struct ctrl* ctrl)
                 ctrl->name, MAJOR(ctrl->rdev), MINOR(ctrl->rdev));
     }
 }
-

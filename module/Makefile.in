@@ -1,4 +1,3 @@
-
 ifneq ($(KERNELRELEASE),)
 	src := @module_root@
 	obj-m := @CMAKE_PROJECT_NAME@.o
@@ -25,7 +24,5 @@ load:
 
 install: default
 	$(MAKE) -C @KERNEL@ M=@module_output@ modules_install
-	#$(MAKE) INSTALL_MOD_DIR=@CMAKE_PROJECT_NAME@ -C @KERNEL@ M=@module_output@ modules_install
 
 endif
-

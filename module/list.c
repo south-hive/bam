@@ -5,8 +5,6 @@
 #include <asm/errno.h>
 #include <linux/compiler.h>
 
-
-
 void list_init(struct list* list)
 {
     list->head.list = list;
@@ -15,8 +13,6 @@ void list_init(struct list* list)
 
     spin_lock_init(&list->lock);
 }
-
-
 
 void list_remove(struct list_node* element)
 {
@@ -32,8 +28,6 @@ void list_remove(struct list_node* element)
         element->prev = NULL;
     }
 }
-
-
 
 void list_insert(struct list* list, struct list_node* element)
 {
@@ -51,4 +45,3 @@ void list_insert(struct list* list, struct list_node* element)
 
     spin_unlock(&list->lock);
 }
-

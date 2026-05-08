@@ -20,40 +20,32 @@
 #define PCI_CLASS_NVME      0x010802
 #define PCI_CLASS_NVME_MASK 0xffffff
 
-
 MODULE_AUTHOR("Jonas Markussen <jonassm@ifi.uio.no>");
 MODULE_DESCRIPTION("Set up DMA mappings for userspace buffers");
 MODULE_LICENSE("Dual BSD/GPL");
 MODULE_VERSION("0.3");
 
-
 /* Define a filter for selecting devices we are interested in */
-static const struct pci_device_id id_table[] = 
+static const struct pci_device_id id_table[] =
 {
     { PCI_DEVICE_CLASS(PCI_CLASS_NVME, PCI_CLASS_NVME_MASK) },
     { 0 }
 };
 
-
 /* Reference to the first character device */
 static dev_t dev_first;
-
 
 /* Device class */
 static struct class* dev_class;
 
-
 /* List of controller devices */
 static struct list ctrl_list;
-
 
 /* List of mapped host memory */
 static struct list host_list;
 
-
 /* List of mapped device memory */
 static struct list device_list;
-
 
 /* Number of devices */
 static int max_num_ctrls = 64;
@@ -61,7 +53,6 @@ module_param(max_num_ctrls, int, 0);
 MODULE_PARM_DESC(max_num_ctrls, "Number of controller devices");
 
 static int curr_ctrls = 0;
-
 
 static int mmap_registers(struct file* file, struct vm_area_struct* vma)
 {
@@ -83,8 +74,6 @@ static int mmap_registers(struct file* file, struct vm_area_struct* vma)
     vma->vm_page_prot = pgprot_noncached(vma->vm_page_prot);
     return vm_iomap_memory(vma, pci_resource_start(ctrl->pdev, 0), vma->vm_end - vma->vm_start);
 }
-
-
 
 static long map_ioctl(struct file* file, unsigned int cmd, unsigned long arg)
 {
@@ -119,7 +108,7 @@ static long map_ioctl(struct file* file, unsigned int cmd, unsigned long arg)
                 }
                 retval = 0;
             }
-            else 
+            else
             {
                 retval = PTR_ERR(map);
             }
@@ -142,7 +131,7 @@ static long map_ioctl(struct file* file, unsigned int cmd, unsigned long arg)
                 }
                 retval = 0;
             }
-            else 
+            else
             {
                 retval = PTR_ERR(map);
             }
@@ -184,16 +173,13 @@ static long map_ioctl(struct file* file, unsigned int cmd, unsigned long arg)
     return retval;
 }
 
-
-
 /* Define file operations for device file */
-static const struct file_operations dev_fops = 
+static const struct file_operations dev_fops =
 {
     .owner = THIS_MODULE,
     .unlocked_ioctl = map_ioctl,
     .mmap = mmap_registers,
 };
-
 
 static int add_pci_dev(struct pci_dev* dev, const struct pci_device_id* id)
 {
@@ -209,14 +195,12 @@ static int add_pci_dev(struct pci_dev* dev, const struct pci_device_id* id)
     printk(KERN_INFO "Adding controller device: %02x:%02x.%1x",
             dev->bus->number, PCI_SLOT(dev->devfn), PCI_FUNC(dev->devfn));
 
-    // Create controller reference
     ctrl = ctrl_get(&ctrl_list, dev_class, dev, curr_ctrls);
     if (IS_ERR(ctrl))
     {
         return PTR_ERR(ctrl);
     }
 
-    // Get a reference to device memory
     err = pci_request_region(dev, 0, DRIVER_NAME);
     if (err != 0)
     {
@@ -225,7 +209,6 @@ static int add_pci_dev(struct pci_dev* dev, const struct pci_device_id* id)
         return err;
     }
 
-    // Enable PCI device
     err = pci_enable_device(dev);
     if (err < 0)
     {
@@ -235,7 +218,6 @@ static int add_pci_dev(struct pci_dev* dev, const struct pci_device_id* id)
         return err;
     }
 
-    // Create character device file
     err = ctrl_chrdev_create(ctrl, dev_first, &dev_fops);
     if (err != 0)
     {
@@ -245,13 +227,12 @@ static int add_pci_dev(struct pci_dev* dev, const struct pci_device_id* id)
         return err;
     }
 
-    // Enable DMA
+    /* Enable DMA */
     pci_set_master(dev);
 
     ++curr_ctrls;
     return 0;
 }
-
 
 static void remove_pci_dev(struct pci_dev* dev)
 {
@@ -265,21 +246,17 @@ static void remove_pci_dev(struct pci_dev* dev)
 
     --curr_ctrls;
 
-    // Find controller reference
     ctrl = ctrl_find_by_pci_dev(&ctrl_list, dev);
     ctrl_put(ctrl);
 
-    // Release device memory
     pci_release_region(dev, 0);
 
-    // Disable PCI device
     pci_clear_master(dev);
     pci_disable_device(dev);
 
     printk(KERN_DEBUG "Controller device removed: %02x:%02x.%1x\n",
             dev->bus->number, PCI_SLOT(dev->devfn), PCI_FUNC(dev->devfn));
 }
-
 
 static unsigned long clear_map_list(struct list* list)
 {
@@ -299,17 +276,14 @@ static unsigned long clear_map_list(struct list* list)
     return i;
 }
 
-
-
 /* Define driver operations we support */
-static struct pci_driver driver = 
+static struct pci_driver driver =
 {
     .name = DRIVER_NAME,
     .id_table = id_table,
     .probe = add_pci_dev,
     .remove = remove_pci_dev,
 };
-
 
 static int __init libnvm_helper_entry(void)
 {
@@ -319,7 +293,6 @@ static int __init libnvm_helper_entry(void)
     list_init(&host_list);
     list_init(&device_list);
 
-    // Set up character device creation
     err = alloc_chrdev_region(&dev_first, 0, max_num_ctrls, DRIVER_NAME);
     if (err < 0)
     {
@@ -327,7 +300,6 @@ static int __init libnvm_helper_entry(void)
         return err;
     }
 
-    // Create character device class
     dev_class = class_create(THIS_MODULE, DRIVER_NAME);
     if (IS_ERR(dev_class))
     {
@@ -336,7 +308,6 @@ static int __init libnvm_helper_entry(void)
         return PTR_ERR(dev_class);
     }
 
-    // Register as PCI driver
     err = pci_register_driver(&driver);
     if (err != 0)
     {
@@ -350,7 +321,6 @@ static int __init libnvm_helper_entry(void)
     return 0;
 }
 module_init(libnvm_helper_entry);
-
 
 static void __exit libnvm_helper_exit(void)
 {

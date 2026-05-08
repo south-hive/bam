@@ -5,14 +5,11 @@
 #include <linux/types.h>
 #include <linux/mm_types.h>
 
-
 /* Forward declaration */
 struct ctrl;
 struct map;
 
-
 typedef void (*release)(struct map*);
-
 
 /*
  * Describes a range of mapped memory.
@@ -31,21 +28,15 @@ struct map
     uint64_t            addrs[1];       /* Bus addresses */
 };
 
-
-
 /*
  * Lock and map userspace pages for DMA.
  */
 struct map* map_userspace(struct list* list, const struct ctrl* ctrl, u64 vaddr, unsigned long n_pages);
 
-
-
 /*
  * Unmap and release memory.
  */
 void unmap_and_release(struct map* map);
-
-
 
 #ifdef _CUDA
 /*
@@ -54,12 +45,9 @@ void unmap_and_release(struct map* map);
 struct map* map_device_memory(struct list* list, const struct ctrl* ctrl, u64 vaddr, unsigned long n_pages, struct list* ctrl_list);
 #endif
 
-
-
 /*
  * Find memory mapping from vaddr and current task
  */
 struct map* map_find(const struct list* list, u64 vaddr);
-
 
 #endif /* __LIBNVM_HELPER_MAP_H__ */
