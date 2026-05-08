@@ -27,19 +27,15 @@ int nvm_queue_clear(nvm_queue_t* queue, const nvm_ctrl_t* ctrl, bool cq, uint16_
     queue->local = !!local;
     queue->head_lock = 0;
     queue->tail_lock = 0;
-    // queue->head_copy = 0;
-    // queue->tail_copy = 0;
     queue->in_ticket = 0;
     queue->cid_ticket = 0;
 
     queue->db = (cq ? CQ_DBL(ctrl->mm_ptr, queue->no, ctrl->dstrd) : SQ_DBL(ctrl->mm_ptr, queue->no, ctrl->dstrd));
     queue->vaddr = vaddr;
     queue->ioaddr = ioaddr;
-    
+
     return 0;
 }
-
-
 
 void nvm_queue_reset(nvm_queue_t* queue)
 {
@@ -48,8 +44,6 @@ void nvm_queue_reset(nvm_queue_t* queue)
     queue->last = 0;
     queue->phase = 1;
 }
-
-
 
 nvm_cpl_t* nvm_cq_dequeue_block(nvm_queue_t* cq, uint64_t timeout)
 {

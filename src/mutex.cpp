@@ -6,8 +6,6 @@
 #include "mutex.h"
 #include "dprintf.h"
 
-
-
 #ifdef __unix__
 int _nvm_mutex_init(struct mutex* mtx)
 {
@@ -24,16 +22,12 @@ int _nvm_mutex_init(struct mutex* mtx)
 }
 #endif
 
-
-
 #ifdef __unix__
 int _nvm_mutex_free(struct mutex* mtx)
 {
     return pthread_mutex_destroy(&mtx->mutex);
 }
 #endif
-
-
 
 #ifdef __unix__
 int _nvm_mutex_lock(struct mutex* mtx)
@@ -43,12 +37,9 @@ int _nvm_mutex_lock(struct mutex* mtx)
 }
 #endif
 
-
-
 #ifdef __unix__
 void _nvm_mutex_unlock(struct mutex* mtx)
 {
     pthread_mutex_unlock(&mtx->mutex);
 }
 #endif
-

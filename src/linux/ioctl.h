@@ -7,8 +7,6 @@
 
 #define NVM_IOCTL_TYPE          0x80
 
-
-
 /* Memory map request */
 struct nvm_ioctl_map
 {
@@ -16,8 +14,6 @@ struct nvm_ioctl_map
     size_t      n_pages;
     uint64_t*   ioaddrs;
 };
-
-
 
 /* Supported operations */
 enum nvm_ioctl_type

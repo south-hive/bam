@@ -25,20 +25,15 @@ static void _nvm_dprintf(const char* func, const char* format, ...)
 
 #endif /* ! NDEBUG */
 
-
-
 /* If no debug print, just swallow message */
 #ifndef dprintf
 #define dprintf(...)
 #endif
-
-
 
 /* If no debug print, don't lookup completions */
 #ifndef _nvm_strerror
 #define _nvm_strerror(status)
 #define _SCIGetErrorString(err)
 #endif
-
 
 #endif /* __NVM_INTERNAL_DPRINTF_H__ */

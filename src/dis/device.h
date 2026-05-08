@@ -14,9 +14,7 @@
 #include <sisci_types.h>
 #include "mutex.h"
 
-
-
-/* 
+/*
  * Device descriptor.
  *
  * Holds a reference to a "borrowed" SISCI SmartIO device.
@@ -34,24 +32,18 @@ struct device
     sci_map_t               md;             // SISCI mapping descriptor
 };
 
-
-
 /*
  * Connect to SmartIO device memory data segment.
  */
-int _nvm_device_memory_get(sci_remote_segment_t* segment, 
-                           const struct device* dev, 
+int _nvm_device_memory_get(sci_remote_segment_t* segment,
+                           const struct device* dev,
                            uint32_t id,
                            unsigned int memtype);
-
-
 
 /*
  * Disconnect from SmartIO device memory segment.
  */
 void _nvm_device_memory_put(sci_remote_segment_t* segment);
-
-
 
 /*
  * Create local segment.
@@ -65,14 +57,10 @@ int _nvm_local_memory_get(sci_local_segment_t* segment,
                           void* ptr,
                           bool gpu_mem);
 
-
-
 /*
  * Remove local segment.
  */
 void _nvm_local_memory_put(sci_local_segment_t* segment);
-
-
 
 #endif /* _SISCI */
 #endif /* __NVM_INTERNAL_DIS_DEVICE_H__ */

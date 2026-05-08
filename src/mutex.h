@@ -4,7 +4,6 @@
 /* Forward declaration */
 struct mutex;
 
-
 /*
  * We currently only support OSes that have pthreads
  */
@@ -13,8 +12,6 @@ struct mutex;
 #else
 #error "OS is not supported"
 #endif
-
-
 
 /*
  * We don't want another level of indirection by
@@ -28,34 +25,24 @@ struct mutex
 };
 #endif
 
-
-
 /*
  * Initialize mutex handle.
  */
 int _nvm_mutex_init(struct mutex* mtx);
-
-
 
 /*
  * Destroy mutex handle.
  */
 int _nvm_mutex_free(struct mutex* mtx);
 
-
-
 /*
  * Enter critical section.
  */
 int _nvm_mutex_lock(struct mutex* mtx);
 
-
-
 /*
  * Leave critical section.
  */
 void _nvm_mutex_unlock(struct mutex* mtx);
-
-
 
 #endif /* __NVM_INTERNAL_MUTEX_H__ */

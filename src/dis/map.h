@@ -12,7 +12,6 @@
 #include "dma.h"
 #include <sisci_types.h>
 
-
 /*
  * Virtual address space mapping.
  */
@@ -21,8 +20,6 @@ struct va_map
     bool                    mapped;     // Is segment mapped into virtual address space?
     sci_map_t               md;         // SISCI mapping descriptor
 };
-
-
 
 /*
  * Local segment descriptor.
@@ -39,8 +36,6 @@ struct local_segment
     struct va_range         range;      // Memory range descriptor
 };
 
-
-
 /*
  * Remote segment descriptor.
  * map.range.remote = true
@@ -54,7 +49,6 @@ struct remote_segment
     struct va_map           map;        // Mapping descriptor
     struct va_range         range;      // Memory range descriptor
 };
-
 
 #endif /* _SISCI */
 #endif /* __NVM_INTERNAL_DIS_MAP_H__ */

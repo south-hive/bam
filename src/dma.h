@@ -6,11 +6,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-
 /* Forward declaration */
 struct va_range;
-
-
 
 /*
  * Callback type for freeing an address range descriptor.
@@ -18,8 +15,6 @@ struct va_range;
  * be released.
  */
 typedef void (*va_range_free_t)(struct va_range* va);
-
-
 
 /*
  * Virtual address range descriptor.
@@ -33,10 +28,8 @@ struct va_range
     size_t          n_pages;    // Number of pages for address range
 };
 
-
 #define VA_RANGE_INIT(remote, vaddr, page_size, n_pages)    \
     (struct va_range) {(remote), (vaddr), (page_size), (n_pages)}
-
 
 /*
  * Map address range for a controller and create and initialize a DMA handle.
@@ -46,12 +39,9 @@ int _nvm_dma_init(nvm_dma_t** handle,
                   struct va_range* va,
                   va_range_free_t release);
 
-
-
 /*
  * Get the internal virtual address range from a handle.
  */
 const struct va_range* _nvm_dma_va(const nvm_dma_t* handle);
-
 
 #endif /* __NVM_INTERNAL_DMA_H__ */

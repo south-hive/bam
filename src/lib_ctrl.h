@@ -5,20 +5,15 @@
 #include "mutex.h"
 #include "lib_util.h"
 
-
-/* 
+/*
  * Device handle.
  */
 struct device;
-
-
 
 /*
  * Forward declaration of a virtual memory address range.
  */
 struct va_range;
-
-
 
 /*
  * Device reference operations.
@@ -31,20 +26,16 @@ struct device_ops
      */
     void (*release_device)(struct device* dev, volatile void* mm_ptr, size_t mm_size);
 
-
     /*
      * Map an address range for the device.
      */
     int (*map_range)(const struct device* dev, const struct va_range* va, uint64_t* ioaddrs);
 
-    
     /*
      * Unmap an address range for the device.
      */
     void (*unmap_range)(const struct device* dev, const struct va_range* va);
 };
-
-
 
 /*
  * Controller device type.
@@ -56,8 +47,6 @@ enum device_type
     DEVICE_TYPE_IOCTL   =   0x01,       /* Device is mapped through UNIX file descriptor */
     DEVICE_TYPE_SMARTIO =   0x02,       /* Device is mapped by SISCI SmartIO API */
 };
-
-
 
 /*
  * Internal controller handle.
@@ -74,8 +63,7 @@ struct controller
     nvm_ctrl_t                  handle;         /* User's handle */
 };
 
-
-/* 
+/*
  * Helper function to initialize the controller handle by reading
  * the appropriate registers from the controller BAR.
  */
@@ -86,21 +74,15 @@ int _nvm_ctrl_init(nvm_ctrl_t** handle,             /* User's handle */
                    volatile void* mm_ptr,           /* Memory-mapped pointer */
                    size_t mm_size);                 /* Size of memory-map */
 
-
-
 /*
  * Increase controller reference count.
  */
 struct controller* _nvm_ctrl_get(const nvm_ctrl_t* handle);
 
-
-
 /*
  * Decrease controller reference count.
  */
 void _nvm_ctrl_put(struct controller* ctrl);
-
-
 
 /*
  * Convenience macro to get the controller type.

@@ -16,7 +16,6 @@
 #include "dprintf.h"
 #endif
 
-
 /* Get the containing struct */
 #if defined( __clang__ ) || defined( __GNUC__ )
 #define _nvm_container_of(ptr, type, member) ({                 \
@@ -27,15 +26,11 @@
     ((type *) (((unsigned char*) (ptr)) - ((unsigned char*) (&((type *) 0)->member))))
 #endif
 
-
 /* Get minimum of two values */
 #define _MIN(a, b) ( (a) <= (b) ? (a) : (b) )
 
-
 /* Get the maximum of two values */
 #define _MAX(a, b) ( (a) > (b) ? (a) : (b) )
-
-
 
 /* Calculate the base-2 logarithm of a number n */
 static inline uint32_t _nvm_b2log(uint32_t n)
@@ -50,7 +45,6 @@ static inline uint32_t _nvm_b2log(uint32_t n)
 
     return count - 1;
 }
-
 
 #if defined( __unix__ )
 /* Delay the minimum of one millisecond and a time remainder */
