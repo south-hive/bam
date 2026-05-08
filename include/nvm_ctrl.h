@@ -1,9 +1,5 @@
 #ifndef __NVM_CTRL_H__
 #define __NVM_CTRL_H__
-// #ifndef __CUDACC__
-// #define __device__
-// #define __host__
-// #endif
 
 #include <nvm_types.h>
 #include <stddef.h>
@@ -14,14 +10,10 @@
 #include <sisci_types.h>
 #endif
 
-
-
 /* 
  * Minimum size of mapped controller memory.
  */
 #define NVM_CTRL_MEM_MINSIZE                        0x2000
-
-
 
 #if defined (__unix__)
 /*
@@ -35,8 +27,6 @@
  */
 int nvm_ctrl_init(nvm_ctrl_t** ctrl, int fd);
 #endif
-
-
 
 /* 
  * Initialize NVM controller handle.
@@ -52,14 +42,10 @@ int nvm_ctrl_init(nvm_ctrl_t** ctrl, int fd);
  */
 int nvm_raw_ctrl_init(nvm_ctrl_t** ctrl, volatile void* mm_ptr, size_t mm_size);
 
-
-
 /*
  * Release controller handle.
  */
 void nvm_ctrl_free(nvm_ctrl_t* ctrl);
-
-
 
 /* 
  * Reset NVM controller.
@@ -75,8 +61,6 @@ void nvm_ctrl_free(nvm_ctrl_t* ctrl);
  */
 int nvm_raw_ctrl_reset(const nvm_ctrl_t* ctrl, uint64_t acq_ioaddr, uint64_t asq_ioaddr);
 
-
-
 #ifdef __DIS_CLUSTER__
 /* 
  * Initialize NVM controller handle.
@@ -87,17 +71,12 @@ int nvm_raw_ctrl_reset(const nvm_ctrl_t* ctrl, uint64_t acq_ioaddr, uint64_t asq
 int nvm_dis_ctrl_init(nvm_ctrl_t** ctrl, uint32_t smartio_fdid);
 #endif
 
-
-
 #ifdef __DIS_CLUSTER__
 int nvm_dis_ctrl_map_p2p_device(const nvm_ctrl_t* ctrl, sci_smartio_device_t dev, uint64_t* ioaddr);
 #endif
 
-
-
 #ifdef __DIS_CLUSTER__
 void nvm_dis_ctrl_unmap_p2p_device(const nvm_ctrl_t* ctrl, sci_smartio_device_t dev);
 #endif
-
 
 #endif /* __NVM_CTRL_H__ */

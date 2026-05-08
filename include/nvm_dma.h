@@ -1,9 +1,5 @@
 #ifndef __NVM_DMA_H__
 #define __NVM_DMA_H__
-// #ifndef __CUDACC__
-// #define __device__
-// #define __host__
-// #endif
 
 #include <nvm_types.h>
 #include <stddef.h>
@@ -13,8 +9,6 @@
 #ifdef __DIS_CLUSTER__
 #include <sisci_types.h>
 #endif
-
-
 
 /*
  * Create DMA mapping descriptor from physical/bus addresses.
@@ -39,15 +33,11 @@ int nvm_dma_map(nvm_dma_t** map,                // Mapping descriptor reference
                 size_t n_pages,                 // Number of pages to map
                 const uint64_t* page_addrs);    // List of physical/bus addresses to the pages
 
-
-
 /*
  * Create DMA mapping descriptor using offsets from a previously 
  * created DMA descriptor.
  */
 int nvm_dma_remap(nvm_dma_t** new_map, const nvm_dma_t* other_map);
-
-
 
 /*
  * Remove DMA mapping descriptor.
@@ -56,8 +46,6 @@ int nvm_dma_remap(nvm_dma_t** new_map, const nvm_dma_t* other_map);
  * This function destroys the descriptor.
  */
 void nvm_dma_unmap(nvm_dma_t* map);
-
-
 
 /*
  * Create DMA mapping descriptor from virtual address using the kernel module.
@@ -68,14 +56,10 @@ void nvm_dma_unmap(nvm_dma_t* map);
  */
 int nvm_dma_map_host(nvm_dma_t** map, const nvm_ctrl_t* ctrl, void* vaddr, size_t size);
 
-
-
-//#if ( defined( __CUDA__ ) || defined( __CUDACC__ ) )
-
 /*
  * Create DMA mapping descriptor from CUDA device pointer using the kernel
  * module. This function is similar to nvm_dma_map_host, except the memory
- * pointer must be a valid CUDA device pointer (see manual for 
+ * pointer must be a valid CUDA device pointer (see manual for
  * cudaGetPointerAttributes).
  *
  * The controller handle must have been created using the kernel module.
@@ -83,10 +67,6 @@ int nvm_dma_map_host(nvm_dma_t** map, const nvm_ctrl_t* ctrl, void* vaddr, size_
  * Note: vaddr can not be NULL, and must be aligned to GPU page size.
  */
 int nvm_dma_map_device(nvm_dma_t** map, const nvm_ctrl_t* ctrl, void* devptr, size_t size);
-
-//#endif /* __CUDA__ */
-
-
 
 #if defined( __DIS_CLUSTER__ )
 
@@ -111,8 +91,6 @@ int nvm_dis_dma_map_local(nvm_dma_t** map,              // Mapping descriptor re
 
 #endif /* __DIS_CLUSTER__ */
 
-
-
 #if defined( __DIS_CLUSTER__ )
 
 /*
@@ -135,8 +113,6 @@ int nvm_dis_dma_map_remote(nvm_dma_t** map,             // Mapping descriptor re
 
 #endif /* __DIS_CLUSTER__ */
 
-
-
 #if ( !defined( __CUDA__ ) && !defined( __CUDACC__ ) ) && ( defined (__unix__) )
 /* 
  * Short-hand function for allocating a page aligned buffer and mapping it 
@@ -146,8 +122,6 @@ int nvm_dis_dma_map_remote(nvm_dma_t** map,             // Mapping descriptor re
  */
 int nvm_dma_create(nvm_dma_t** map, const nvm_ctrl_t* ctrl, size_t size);
 #endif
-
-
 
 #if defined( __DIS_CLUSTER__ )
 /*
@@ -159,8 +133,6 @@ int nvm_dis_dma_create(nvm_dma_t** map, const nvm_ctrl_t* ctrl, size_t size, uns
 
 #endif /* __DIS_CLUSTER__ */
 
-
-
 #if defined ( __DIS_CLUSTER__ )
 
 /*
@@ -170,14 +142,10 @@ int nvm_dis_dma_map_host(nvm_dma_t** map, const nvm_ctrl_t* ctrl, void* vaddr, s
 
 #endif
 
-
 #if ( ( defined( __CUDA__ ) || defined( __CUDACC__ ) ) && defined( __DIS_CLUSTER__ ) )
 
 int nvm_dis_dma_map_device(nvm_dma_t** map, const nvm_ctrl_t* ctrl, void* devptr, size_t size);
 
 #endif /* __DIS_CLUSTER__ && __CUDA__ */
-
-
-
 
 #endif /* __NVM_DMA_H__ */

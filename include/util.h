@@ -11,14 +11,10 @@
 #define __forceinline__ inline
 #endif
 
-
-
 #include "cuda.h"
 #include "nvm_util.h"
 #include "host_util.h"
-//#include <ctype>
 #include <cstdio>
-
 
 #define cuda_err_chk(ans) { gpuAssert((ans), __FILE__, __LINE__); }
 
@@ -45,7 +41,6 @@ inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=f
 
 #define CEIL(X, Y, Z) ((X + Y - 1) >> Z)
 
-
 #ifndef HEXDUMP_COLS
 #define HEXDUMP_COLS 16
 #endif
@@ -71,26 +66,6 @@ inline __device__ void hexdump(void *mem, unsigned int len)
                         printf("   ");
                 }
 
-                /* print ASCII dump */
-//                if(i % HEXDUMP_COLS == (HEXDUMP_COLS - 1))
-//                {
-//                        for(j = i - (HEXDUMP_COLS - 1); j <= i; j++)
-//                        {
-//                                if(j >= len) /* end of block, not really printing */
-//                                {
-//                                        printf(' ');
-//                                }
-//                                else if(isprint(((char*)mem)[j])) /* printable char */
-//                                {
-//                                        printf(0xFF & ((char*)mem)[j]);
-//                                }
-//                                else /* other char */
-//                                {
-//                                        putchar('.');
-//                                }
-//                        }
-//                        putchar('\n');
-//                }
         }
         printf("\n");
 }
@@ -115,11 +90,5 @@ void warp_memcpy(T* dest, const T* src, size_t num) {
         for(size_t i = prior_count; i < num; i+=active_cnt)
                 dest[i] = src[i];
 }
-
-//#ifndef __CUDACC__
-//#undef __device__
-//#undef __host__
-//#undef __forceinline__
-//#endif
 
 #endif // __UTIL_H__

@@ -14,12 +14,9 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-
-
 /* All namespaces identifier */
 #define NVM_CMD_NS_ALL                  0xffffffff
 #define NVM_CMD_OPCODE(gen, fun, data)  (_WB((gen), 7, 7) | _WB((fun), 6, 2) | _WB((data), 1, 0))
-
 
 /* List of NVM IO command opcodes */
 enum nvm_io_command_set
@@ -29,8 +26,6 @@ enum nvm_io_command_set
     NVM_IO_READ             = NVM_CMD_OPCODE(0, 0, 2),  // 02h
     NVM_IO_WRITE_ZEROES     = NVM_CMD_OPCODE(0, 2, 0)   // 08h
 };
-
-
 
 /* List of NVM admin command opcodes */
 enum nvm_admin_command_set
@@ -46,8 +41,6 @@ enum nvm_admin_command_set
     NVM_ADMIN_GET_FEATURES  = NVM_CMD_OPCODE(0, 2, 2)   // 0Ah
 };
 
-
-
 /*
  * Set command's DWORD0 and DWORD1
  */
@@ -57,8 +50,6 @@ void nvm_cmd_header(nvm_cmd_t* cmd, uint16_t cid, uint8_t opcode, uint32_t ns_id
     cmd->dword[0] = ((uint32_t) cid << 16) | (0x00 << 14) | (0x00 << 8) | (opcode & 0x7f);
     cmd->dword[1] = ns_id;
 }
-
-
 
 /*
  * Set command's DPTR field (DWORD6-9)
@@ -74,8 +65,6 @@ void nvm_cmd_data_ptr(nvm_cmd_t* cmd, uint64_t prp1, uint64_t prp2)
     cmd->dword[9] = (uint32_t) (prp2 >> 32UL);
 }
 
-
-
 /*
  * Set command's block fields (DWORD10-12)
  */
@@ -86,19 +75,6 @@ void nvm_cmd_rw_blks(nvm_cmd_t* cmd, uint64_t start_lba, uint16_t n_blks)
     cmd->dword[11] = start_lba >> 32;
     cmd->dword[12] = (cmd->dword[12] & 0xffff0000) | ((n_blks - 1) & 0xffff);
 }
-
-
-
-/*
- * Set command's dataset management (DSM) field (DWORD13)
- */
-//__device__ __host__ static inline
-//void nvm_cmd_dataset(nvm_cmd_t* cmd, bool sequential, bool low_latency)
-//{
-//    cmd->dword[13] = 0; // not supported yet
-//}
-
-
 
 /*
  * Build PRP list consisting of PRP entries.
@@ -153,8 +129,6 @@ size_t nvm_prp_list(const nvm_prp_list_t* list, size_t n_pages, const uint64_t* 
     return i_prp;
 }
 
-
-
 /*
  * Build chain of PRP lists.
  * Returns the total number of PRP entries.
@@ -183,8 +157,6 @@ size_t nvm_prp_list_chain(size_t n_lists, const nvm_prp_list_t* lists, size_t n_
 
     return n_prps;
 }
-
-
 
 /*
  * Helper function to build a PRP list and set a command's data pointer fields.
@@ -224,23 +196,12 @@ size_t nvm_cmd_data(nvm_cmd_t* cmd, size_t n_lists, const nvm_prp_list_t* lists,
     return prp;
 }
 
-
-
 /* Make PRP list descriptor from values */
 #define NVM_PRP_LIST_INIT(vaddr, local, page_size, ioaddr) \
     ((nvm_prp_list_t) {(vaddr), !!(local), (page_size), (ioaddr)})
 
-
 /* Make PRP list descriptor from DMA descriptor */
 #define NVM_PRP_LIST(dma_ptr, offset)               \
     NVM_PRP_LIST_INIT(NVM_DMA_OFFSET(dma_ptr, offset), (dma_ptr)->local, (dma_ptr)->page_size, (dma_ptr)->ioaddrs[(offset)])
-
-
-
-
-//#ifndef __CUDACC__
-//#undef __device__
-//#undef __host__
-//#endif
 
 #endif /* __NVM_COMMAND_H__ */

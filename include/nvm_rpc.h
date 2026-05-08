@@ -1,18 +1,8 @@
 #ifndef __NVM_RPC_H__
 #define __NVM_RPC_H__
 
-// #ifndef __CUDACC__
-// #define __device__
-// #define __host__
-// #endif
-
 #include <nvm_types.h>
 #include <stdint.h>
-
-
-//int nvm_tcp_rpc_bind(nvm_aq_ref* ref, const char* hostname, uint16_t port);
-
-
 
 #ifdef __DIS_CLUSTER__
 
@@ -24,15 +14,11 @@ int nvm_dis_rpc_bind(nvm_aq_ref* ref, const nvm_ctrl_t* ctrl, uint32_t adapter);
 
 #endif
 
-
-
 /*
  * Unbind admin queue-pair reference.
  * If reference is not bound (i.e., it is local), this function will do nothing.
  */
 void nvm_rpc_unbind(nvm_aq_ref ref);
-
-
 
 /*
  * Relay NVM admin command.
@@ -51,8 +37,5 @@ void nvm_rpc_unbind(nvm_aq_ref ref);
  * Note: The command can be modified.
  */
 int nvm_raw_rpc(nvm_aq_ref ref, nvm_cmd_t* cmd, nvm_cpl_t* cpl);
-
-
-
 
 #endif /* #ifdef __NVM_RPC_H__ */

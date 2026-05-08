@@ -1,14 +1,9 @@
 #ifndef __BENCHMARK_EVENT_H__
 #define __BENCHMARK_EVENT_H__
-// #ifndef __CUDACC__
-// #define __device__
-// #define __host__
-// #endif
 
 #include "cuda.h"
 #include <string>
 #include <stdexcept>
-
 
 struct Event
 {
@@ -30,12 +25,10 @@ struct Event
 
     }
 
-
     inline ~Event()
     {
         cudaEventDestroy(event);
     }
-
 
     inline double operator-(const Event& other) const
     {
@@ -49,6 +42,5 @@ struct Event
         return ((double) msecs) * 1e3;
     }
 };
-
 
 #endif

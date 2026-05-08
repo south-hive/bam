@@ -14,7 +14,6 @@
 #include <stdbool.h>
 #include <errno.h>
 
-
 /*
  * Clear queue descriptor.
  *
@@ -36,8 +35,6 @@ int nvm_queue_clear(nvm_queue_t* q,            // NVM queue descriptor
                     volatile void* vaddr,      // Virtual address to queue memory
                     uint64_t ioaddr);          // Bus address to queue memory (as seen from the controller)
 
-
-
 /*
  * Reset queue descriptor and set all members to initial state.
  *
@@ -48,9 +45,6 @@ int nvm_queue_clear(nvm_queue_t* q,            // NVM queue descriptor
 
 __host__
 void nvm_queue_reset(nvm_queue_t* q);
-
-
-
 
 /* 
  * Enqueue a submission command.
@@ -81,8 +75,6 @@ nvm_cmd_t* nvm_sq_enqueue(nvm_queue_t* sq)
 
     return cmd;
 }
-
-
 
 /*
  * Enqueue command the i'th of n threads.
@@ -141,8 +133,6 @@ nvm_cmd_t* nvm_sq_enqueue_n(nvm_queue_t* sq, nvm_cmd_t* last, uint16_t n, uint16
 }
 #endif
 
-
-
 /* 
  * Poll completion queue.
  *
@@ -173,8 +163,6 @@ nvm_cpl_t* nvm_cq_poll(const nvm_queue_t* cq)
     return cpl;
 }
 
-
-
 /* 
  * Dequeue completion queue entry.
  *
@@ -203,8 +191,6 @@ nvm_cpl_t* nvm_cq_dequeue(nvm_queue_t* cq)
     return cpl;
 }
 
-
-
 /* 
  * Dequeue completion queue entry.
  *
@@ -218,9 +204,6 @@ nvm_cpl_t* nvm_cq_dequeue(nvm_queue_t* cq)
 
 __host__
 nvm_cpl_t* nvm_cq_dequeue_block(nvm_queue_t* cq, uint64_t timeout);
-
-
-
 
 /* 
  * Update SQ tail pointer.
@@ -251,8 +234,6 @@ void nvm_sq_submit(nvm_queue_t* sq)
     }
 }
 
-
-
 /* 
  * Update SQ head pointer.
  */
@@ -265,8 +246,6 @@ void nvm_sq_update(nvm_queue_t* sq)
         sq->head = 0;
     }
 }
-
-
 
 /* 
  * Update controller's CQ head pointer.
@@ -284,11 +263,5 @@ void nvm_cq_update(nvm_queue_t* cq)
         cq->tail = cq->last = cq->head;
     }
 }
-
-
-//#ifndef __CUDACC__
-//#undef __device__
-//#undef __host__
-//#endif
 
 #endif /* __NVM_QUEUE_H__ */

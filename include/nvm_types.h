@@ -1,9 +1,5 @@
 #ifndef __NVM_TYPES_H__
 #define __NVM_TYPES_H__
-// #ifndef __CUDACC__
-// #define __device__
-// #define __host__
-// #endif
 
 #include <stddef.h>
 #include <stdint.h>
@@ -12,8 +8,6 @@
 #ifndef __align__ 
 #define __align__(x)
 #endif
-
-
 
 /* 
  * NVM controller handle.
@@ -31,9 +25,6 @@ typedef struct
     volatile void*          mm_ptr;         // Memory-mapped pointer to BAR0 of the physical device
 } nvm_ctrl_t;
 
-
-
-
 /*
  * NVM admin queue-pair reference handle.
  *
@@ -47,8 +38,6 @@ typedef struct
  */
 struct nvm_admin_reference;
 typedef struct nvm_admin_reference* nvm_aq_ref;
-
-
 
 /*
  * DMA mapping descriptor.
@@ -77,40 +66,18 @@ typedef struct
     uint64_t                ioaddrs[];      // Physical/IO addresses of the memory pages
 }  nvm_dma_t;
 
-
-
 typedef simt::atomic<uint32_t, simt::thread_scope_device> padded_struct_pc;
 
 #define CACHELINE_SIZE (128)
 
 #define STATES_PER_CACHELINE (CACHELINE_SIZE/sizeof(padded_struct_pc))
-/* typedef struct __align__(32) */
-/* { */
-/*     simt::atomic<uint32_t, simt::thread_scope_device>  val; */
-/* //    uint8_t pad[32-4]; */
-/* } __attribute__((aligned (32))) padded_struct_pc; */
-
 
 typedef struct __align__(32)
 {
     simt::atomic<uint32_t, simt::thread_scope_device>  val;
-    //uint8_t pad[32-8];
 } __attribute__((aligned (32))) padded_struct;
 
-/* typedef struct __align__(32) */
-/* { */
-/*     simt::atomic<uint32_t, simt::thread_scope_system>  val; */
-/*     //uint8_t pad[32-8]; */
-/* } __attribute__((aligned (32))) padded_struct_pc; */
-
-
-/* typedef struct __align__(32) */
-/* { */
-/*     simt::atomic<uint64_t, simt::thread_scope_system>  val; */
-/*     uint8_t pad[32-8]; */
-/* } __attribute__((aligned (32))) padded_struct; */
-
-/* 
+/*
  * NVM queue descriptor.
  *
  * This structure represents an NVM IO queue and holds information 
@@ -135,12 +102,9 @@ typedef struct
     simt::atomic<uint32_t, simt::thread_scope_system> head_copy;
     uint8_t pad5[28];
 
-    /* padded_struct<simt::atomic<uint32_t, simt::thread_scope_system>> head; */
-    /* padded_struct<simt::atomic<uint32_t, simt::thread_scope_system>> tail; */
     simt::atomic<uint32_t, simt::thread_scope_device> in_ticket;
     uint8_t pad6[28];
     simt::atomic<uint32_t, simt::thread_scope_device> cid_ticket;
-    //uint8_t pad7[28];
     padded_struct* tickets;
 
     padded_struct* head_mark;
@@ -154,8 +118,6 @@ typedef struct
     uint16_t                no;             // Queue number (must be unique per SQ/CQ pair)
     uint16_t                es;             // Queue entry size
     uint32_t                qs;             // Queue size (number of entries)
-    //uint16_t                head;           // Queue's head pointer
-    //uint16_t                tail;           // Queue's tail pointer
     int8_t                  phase;          // Current phase tag
     int8_t                  local;          // Is the queue allocated in local memory
     uint32_t                last;           // Used internally to check db writes
@@ -163,8 +125,6 @@ typedef struct
     volatile void*          vaddr;          // Virtual address to start of queue memory
     uint64_t                ioaddr;         // Physical/IO address to start of queue memory
 } nvm_queue_t;
-
-
 
 /*
  * Convenience type for representing a single-page PRP list.
@@ -177,8 +137,6 @@ typedef struct __align__(32)
     uint64_t                ioaddr;         // Physical/IO address of memory page
 } __attribute__((aligned (32))) nvm_prp_list_t;
 
-
-
 /* 
  * NVM completion queue entry type (16 bytes) 
  */
@@ -187,8 +145,6 @@ typedef struct __align__(16)
     volatile uint32_t                dword[4];       // The name DWORD is chosen to reflect the specification
 } __attribute__((aligned (16))) nvm_cpl_t;
 
-
-
 /* 
  * NVM command queue entry type (64 bytes) 
  */
@@ -196,8 +152,6 @@ typedef struct __align__(64)
 {
     uint32_t                dword[16];
 } __attribute__((aligned (64))) nvm_cmd_t;
-
-
 
 /*
  * Controller information structure.
@@ -225,8 +179,6 @@ struct nvm_ctrl_info
     size_t                  max_n_ns;       // Maximum number of namespaces (NN)
 };
 
-
-
 /*
  * Namespace information structure.
  *
@@ -241,11 +193,5 @@ struct nvm_ns_info
     size_t                  lba_data_size;  // Logical block size (LBADS)
     size_t                  metadata_size;  // Metadata size (MS)
 };
-
-
-
-//#ifndef __CUDACC__
-//#undef __align__
-//#endif
 
 #endif /* __NVM_TYPES_H__ */

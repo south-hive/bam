@@ -2,11 +2,6 @@
 #ifndef __BENCHMARK_CTRL_H__
 #define __BENCHMARK_CTRL_H__
 
-// #ifndef __CUDACC__
-// #define __device__
-// #define __host__
-// #endif
-
 #include <cstdint>
 #include "buffer.h"
 #include "nvm_types.h"
@@ -32,9 +27,7 @@
 
 #include "queue.h"
 
-
 #define MAX_QUEUES 1024
-
 
 struct Controller
 {
@@ -57,7 +50,6 @@ struct Controller
     uint32_t blk_size;
     uint32_t blk_size_log;
 
-
     void* d_ctrl_ptr;
     BufferPtr d_ctrl_buff;
 #ifdef __DIS_CLUSTER__
@@ -77,11 +69,8 @@ struct Controller
     ~Controller();
 };
 
-
-
 using error = std::runtime_error;
 using std::string;
-
 
 inline void Controller::print_reset_stats(void) {
     cuda_err_chk(cudaMemcpy(&access_counter, d_ctrl_ptr, sizeof(simt::atomic<uint64_t, simt::thread_scope_device>), cudaMemcpyDeviceToHost));
@@ -122,8 +111,6 @@ static void initializeController(struct Controller& ctrl, uint32_t ns_id)
     }
 }
 
-
-
 #ifdef __DIS_CLUSTER__
 Controller::Controller(uint64_t ctrl_id, uint32_t ns_id, uint32_t)
     : ctrl(nullptr)
@@ -142,8 +129,6 @@ Controller::Controller(uint64_t ctrl_id, uint32_t ns_id, uint32_t)
     initializeController(*this, ns_id);
 }
 #endif
-
-
 
 inline Controller::Controller(const char* path, uint32_t ns_id, uint32_t cudaDevice, uint64_t queueDepth, uint64_t numQueues)
     : ctrl(nullptr)
@@ -183,13 +168,9 @@ inline Controller::Controller(const char* path, uint32_t ns_id, uint32_t cudaDev
     h_qps = (QueuePair**) malloc(sizeof(QueuePair)*n_qps);
     cuda_err_chk(cudaMalloc((void**)&d_qps, sizeof(QueuePair)*n_qps));
     for (size_t i = 0; i < n_qps; i++) {
-        //printf("started creating qp\n");
         h_qps[i] = new QueuePair(ctrl, cudaDevice, ns, info, aq_ref, i+1, queueDepth);
-        //printf("finished creating qp\n");
         cuda_err_chk(cudaMemcpy(d_qps+i, h_qps[i], sizeof(QueuePair), cudaMemcpyHostToDevice));
     }
-    //printf("finished creating all qps\n");
-
 
     close(fd);
 
@@ -197,8 +178,6 @@ inline Controller::Controller(const char* path, uint32_t ns_id, uint32_t cudaDev
     d_ctrl_ptr = d_ctrl_buff.get();
     cuda_err_chk(cudaMemcpy(d_ctrl_ptr, this, sizeof(Controller), cudaMemcpyHostToDevice));
 }
-
-
 
 inline Controller::~Controller()
 {
@@ -212,21 +191,15 @@ inline Controller::~Controller()
 
 }
 
-
-
 inline void Controller::reserveQueues()
 {
     reserveQueues(n_sqs, n_cqs);
 }
 
-
-
 inline void Controller::reserveQueues(uint16_t numSubmissionQueues)
 {
     reserveQueues(numSubmissionQueues, n_cqs);
 }
-
-
 
 inline void Controller::reserveQueues(uint16_t numSubs, uint16_t numCpls)
 {
@@ -240,7 +213,5 @@ inline void Controller::reserveQueues(uint16_t numSubs, uint16_t numCpls)
     n_cqs = numCpls;
 
 }
-
-
 
 #endif

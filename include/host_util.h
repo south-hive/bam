@@ -70,7 +70,6 @@ T __shfl_sync(unsigned mask, T var, int srcLane, int width=32) {
     return var;
 }
 
-
 template<typename T>
 inline __host__
 unsigned int __match_any_sync(unsigned mask, T var) {
@@ -79,12 +78,6 @@ unsigned int __match_any_sync(unsigned mask, T var) {
     return 1;
 }
 
-#endif 
-
-//#ifndef __CUDACC__
-//#undef __device__
-//#undef __host__
-//#undef __forceinline__
-//#endif
+#endif
 
 #endif // __HOST_UTIL_H_

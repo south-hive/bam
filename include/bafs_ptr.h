@@ -29,9 +29,6 @@ public:
     __host__ __device__ bafs_ptr():
         h_pData(NULL), pData(NULL),start_idx(0){
     }
-    // __host__ __device__ bafs_ptr(array_d_t<T>* const pValue):
-    //     h_pData(NULL), pData(pValue),start_idx(0){
-    // }
 
     __host__ __device__ bafs_ptr(array_d_t<T>* const pValue, const uint64_t start_off):
         h_pData(NULL), pData(pValue),start_idx(start_off){
@@ -71,9 +68,6 @@ public:
 
     template<typename T_>
     friend __host__ __device__ bool operator==(const bafs_ptr<T_>& lhs, const bafs_ptr<T_>& rhs);
-
-    // template<typename T_>
-    // friend __host__ __device__ bool operator==(bafs_ptr<T>* lhs, const bafs_ptr<T_>& rhs);
 
     __host__ __device__ void operator()(const uint64_t i, const T val) {
         (*pData)(i, val);
@@ -123,25 +117,10 @@ public:
     }
 };
 
-
-
 template<typename T_>
 __host__ __device__
 bool operator==(const bafs_ptr<T_>& lhs, const bafs_ptr<T_>& rhs){
    return (lhs.pData == rhs.pData && lhs.start_idx == rhs.start_idx && lhs.h_pData == rhs.h_pData);
 }
-
-// template<typename T_>
-// __host__ __device__
-// bool operator==(bafs_ptr<T_>* lhs, const bafs_ptr<T_>& rhs){
-//    return (lhs->pData == rhs.pData && lhs->start_idx == rhs.start_idx);
-// }
-
-
-//#ifndef __CUDACC__
-//#undef __device__
-//#undef __host__
-//#undef __forceinline__
-//#endif
 
 #endif //__BAFS_PTR_H__
