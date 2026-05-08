@@ -27,6 +27,25 @@
 
 #include "queue.h"
 
+/*
+ * Optional integration with plink's CUSE wrapper. When BAM_USE_PLINK_CUSE
+ * is defined (currently only by plink's own CMakeLists for parallelink),
+ * the Controller constructor below also spawns /dev/bam_ctrlN as a
+ * userspace character device so external tools (nvme-cli, fio, etc.)
+ * can interact with this libnvm-managed controller. Standalone bam
+ * builds leave this off and behave exactly as before.
+ *
+ * plink_cuse.h is part of plink (sibling repo south-hive/plink) and is
+ * expected to be reachable via the includer's -I path when this define
+ * is set. plink_cuse.{h,c} have zero bam dependencies, so the resulting
+ * link graph is acyclic — see plink/src/plink_cuse.c header comment.
+ */
+#ifdef BAM_USE_PLINK_CUSE
+#include "plink_cuse.h"
+#include <atomic>
+#endif
+
+
 #define MAX_QUEUES 1024
 
 struct Controller
@@ -52,6 +71,16 @@ struct Controller
 
     void* d_ctrl_ptr;
     BufferPtr d_ctrl_buff;
+
+#ifdef BAM_USE_PLINK_CUSE
+    /* CUSE session that backs /dev/bam_ctrlN for this controller.
+     * Spawned by the path-based constructor below; torn down by the
+     * destructor. May be NULL if cuse_lowlevel_setup() failed at
+     * runtime (e.g. cuse.ko not loaded), in which case the rest of
+     * the Controller still functions for direct GPU/host use. */
+    plink_cuse_session_t* cuse_session = nullptr;
+#endif
+
 #ifdef __DIS_CLUSTER__
     Controller(uint64_t controllerId, uint32_t nvmNamespace, uint32_t adapter, uint32_t segmentId);
 #endif
@@ -177,10 +206,39 @@ inline Controller::Controller(const char* path, uint32_t ns_id, uint32_t cudaDev
     d_ctrl_buff = createBuffer(sizeof(Controller), cudaDevice);
     d_ctrl_ptr = d_ctrl_buff.get();
     cuda_err_chk(cudaMemcpy(d_ctrl_ptr, this, sizeof(Controller), cudaMemcpyHostToDevice));
+
+#ifdef BAM_USE_PLINK_CUSE
+    /* Expose this Controller as a kernel-visible char device. Names
+     * are unique per process via a monotonic counter; cross-process
+     * collisions are surfaced as a CUSE setup failure (handled
+     * non-fatally below). */
+    {
+        static std::atomic<int> bam_cuse_counter{0};
+        char dev_name[64];
+        std::snprintf(dev_name, sizeof(dev_name), "bam_ctrl%d",
+                      bam_cuse_counter.fetch_add(1));
+        cuse_session = plink_cuse_start(dev_name, this);
+        if (!cuse_session) {
+            std::fprintf(stderr,
+                "Controller: plink_cuse_start failed for /dev/%s — "
+                "continuing without CUSE device\n", dev_name);
+        }
+    }
+#endif
 }
 
 inline Controller::~Controller()
 {
+#ifdef BAM_USE_PLINK_CUSE
+    /* Tear CUSE down first: handlers may still hold references back
+     * into this Controller, so the worker thread must be joined
+     * before we start freeing queue/admin state below. */
+    if (cuse_session) {
+        plink_cuse_stop(cuse_session);
+        cuse_session = nullptr;
+    }
+#endif
+
     cudaFree(d_qps);
     for (size_t i = 0; i < n_qps; i++) {
         delete h_qps[i];
