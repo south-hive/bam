@@ -243,7 +243,7 @@ static void force_release_gpu_memory(struct map* map)
 #endif
 
 #ifdef _CUDA
-void release_gpu_memory(struct map* map)
+static void release_gpu_memory(struct map* map)
 {
     struct gpu_region* gd = (struct gpu_region*) map->data;
     struct list* list = map->ctrl_list;
@@ -279,7 +279,7 @@ void release_gpu_memory(struct map* map)
 #endif
 
 #ifdef _CUDA
-int map_gpu_memory(struct map* map, struct list* list)
+static int map_gpu_memory(struct map* map, struct list* list)
 {
     unsigned long i;
     uint32_t j;
