@@ -1460,8 +1460,6 @@ uint32_t page_cache_d_t::find_slot(uint64_t address, uint64_t range_id, const ui
     uint64_t count = 0;
     uint64_t global_address =(uint64_t) ((address << n_ranges_bits) | range_id); //not elegant. but hack
     uint32_t page = 0;
-    unsigned int ns = 8;
-	uint64_t j = 0;
     uint64_t expected_state = VALID;
     uint64_t new_expected_state = 0;
 
@@ -1646,13 +1644,9 @@ inline __device__ void write_data(page_cache_d_t* pc, QueuePair* qp, const uint6
     nvm_cmd_rw_blks(&cmd, starting_lba, n_blocks);
     uint16_t sq_pos = sq_enqueue(&qp->sq, &cmd);
     uint32_t head, head_;
-    uint64_t pc_pos;
-    uint64_t pc_prev_head;
 
     uint32_t cq_pos = cq_poll(&qp->cq, cid, &head, &head_);
     qp->cq.tail.fetch_add(1, simt::memory_order_acq_rel);
-    pc_prev_head = pc->q_head->load(simt::memory_order_relaxed);
-    pc_pos = pc->q_tail->fetch_add(1, simt::memory_order_acq_rel);
     cq_dequeue(&qp->cq, cq_pos, &qp->sq, head, head_);
 
     put_cid(&qp->sq, cid);
