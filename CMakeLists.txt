@@ -3,6 +3,7 @@ project (libnvm LANGUAGES CUDA C CXX)
 
 set (CMAKE_C_STANDARD 99)
 set (CMAKE_CXX_STANDARD 11)
+set (CMAKE_SUPPRESS_DEVELOPER_WARNINGS TRUE CACHE BOOL "Suppress CMake developer warnings" FORCE)
 
 set (THREADS_PREFER_PTHREAD_FLAG ON)
 find_package (Threads REQUIRED)
@@ -41,8 +42,8 @@ set (flags "")
 foreach (flag ${convert_warnings})
     string (APPEND flags " -Werror=${flag}")
 endforeach()
-set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra ${flags}" CACHE INTERNAL "" FORCE)
-set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -std=c++11" CACHE INTERNAL "" FORCE)
+set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -Wno-unused-parameter ${flags}" CACHE INTERNAL "" FORCE)
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wno-unused-parameter -std=c++11" CACHE INTERNAL "" FORCE)
 
 # ------------------------------------------------------------------
 # parallelink patch: explicit Debug / Release selection for host+device
