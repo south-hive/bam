@@ -12,11 +12,12 @@
 #include <linux/err.h>
 #include <linux/device.h>
 #include <linux/uaccess.h>
+#include <linux/version.h>
 #include <asm/io.h>
 #include <asm/errno.h>
 #include <asm/page.h>
 
-#define DRIVER_NAME         "libnvm helper"
+#define DRIVER_NAME         "libnvm"
 #define PCI_CLASS_NVME      0x010802
 #define PCI_CLASS_NVME_MASK 0xffffff
 
@@ -300,7 +301,12 @@ static int __init libnvm_helper_entry(void)
         return err;
     }
 
+#if LINUX_VERSION_CODE <= KERNEL_VERSION(6, 3, 13)
+#warning "Building for older kernel, not properly tested"
     dev_class = class_create(THIS_MODULE, DRIVER_NAME);
+#else
+    dev_class = class_create(DRIVER_NAME);
+#endif
     if (IS_ERR(dev_class))
     {
         unregister_chrdev_region(dev_first, max_num_ctrls);
