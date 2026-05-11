@@ -300,6 +300,7 @@ uint16_t sq_enqueue(nvm_queue_t* sq, nvm_cmd_t* cmd, simt::atomic<uint64_t, simt
                         *cur_pc_tail = pc_tail->load(simt::memory_order_acquire);
                     }
 //                    *(sq->db) = new_db;
+                    asm volatile ("// PLINK_SQ_DBL_MMIO" ::: );
 		    asm volatile ("st.mmio.relaxed.sys.global.u32 [%0], %1;" :: "l"(sq->db),"r"(new_db) : "memory");
 
                     //sq->tail_copy.store(new_tail, simt::memory_order_release);
@@ -405,6 +406,7 @@ uint32_t cq_poll(nvm_queue_t* cq, uint16_t search_cid, uint32_t* loc_ = NULL, ui
                  //     printf("NVM Error: %llx\tcid: %llu\n", (unsigned long long) (cpl_entry >> 17), (unsigned long long) search_cid);
                 *cq_head = head;
                 *loc_ = cur_head;
+                asm volatile ("// PLINK_CQ_POLL_END" ::: );
                 return loc;
             }
             if (phase != search_phase)
