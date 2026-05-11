@@ -25,6 +25,34 @@
 #define LOCKED   1
 #define UNLOCKED 0
 
+struct nvm_read_profile_t {
+    uint64_t read_total;
+    uint64_t cid_acquire;
+    uint64_t cmd_build;
+    uint64_t sq_enqueue_total;
+    uint64_t sq_ticket_wait;
+    uint64_t sq_cmd_copy;
+    uint64_t sq_tail_advance;
+    uint64_t sq_mmio;
+    uint64_t cq_poll_total;
+    uint64_t cq_poll_scan;
+    uint64_t cq_tail_atomic;
+    uint64_t cq_dequeue_total;
+    uint64_t cq_pos_lock;
+    uint64_t cq_head_advance;
+    uint64_t cq_mmio;
+    uint64_t cq_visibility_wait;
+    uint64_t cid_release;
+};
+
+__forceinline__ __device__ uint64_t nvm_profile_clock() {
+#ifdef __CUDA_ARCH__
+    return clock64();
+#else
+    return 0;
+#endif
+}
+
 __forceinline__ __device__ uint64_t get_id(uint64_t x, uint64_t y) {
     //return (x >> y);
     return (x >> y) * 2;  // (x/2^y) *2
@@ -164,8 +192,12 @@ uint32_t move_head_sq(nvm_queue_t* q, uint32_t cur_head) {
 
 typedef ulonglong4 copy_type;
 
+template <bool PROFILE=false>
 inline __device__
-uint16_t sq_enqueue(nvm_queue_t* sq, nvm_cmd_t* cmd, simt::atomic<uint64_t, simt::thread_scope_device>* pc_tail =NULL, uint64_t * cur_pc_tail=NULL) {
+uint16_t sq_enqueue(nvm_queue_t* sq, nvm_cmd_t* cmd, simt::atomic<uint64_t, simt::thread_scope_device>* pc_tail =NULL, uint64_t * cur_pc_tail=NULL, nvm_read_profile_t* prof=NULL) {
+    uint64_t prof_start = 0;
+    if (PROFILE)
+        prof_start = nvm_profile_clock();
 
     //uint32_t mask = __activemask();
     //uint32_t active_count = __popc(mask);
@@ -185,6 +217,9 @@ uint16_t sq_enqueue(nvm_queue_t* sq, nvm_cmd_t* cmd, simt::atomic<uint64_t, simt
 
     //uint64_t k = 0;
     unsigned int ns = 8;
+    uint64_t wait_start = 0;
+    if (PROFILE)
+        wait_start = nvm_profile_clock();
     while ((sq->tickets[pos].val.load(simt::memory_order_relaxed) != id) ) {
         /*if (k++ % 100 == 0)   {
             printf("tid: %llu\tpos: %llu\tticket: %llu\tid: %llu\ttickets_pos: %llu\tqueue_head: %llu\tqueue_tail: %llu\n",
@@ -215,6 +250,8 @@ uint16_t sq_enqueue(nvm_queue_t* sq, nvm_cmd_t* cmd, simt::atomic<uint64_t, simt
         }
 #endif
     }
+    if (PROFILE)
+        prof->sq_ticket_wait += nvm_profile_clock() - wait_start;
 
 //    ulonglong4* queue_loc = ((ulonglong4*)(((nvm_cmd_t*)(sq->vaddr)) + pos));
 //    ulonglong4* cmd_ = ((ulonglong4*)(cmd->dword));
@@ -249,13 +286,15 @@ uint16_t sq_enqueue(nvm_queue_t* sq, nvm_cmd_t* cmd, simt::atomic<uint64_t, simt
     //queue_loc->dword[11] = cmd->dword[11];
     //queue_loc->dword[12] = cmd->dword[12];
 
+    uint64_t copy_start = 0;
+    if (PROFILE)
+        copy_start = nvm_profile_clock();
 #pragma unroll
     for (uint32_t i = 0; i < 64/sizeof(copy_type); i++) {
         queue_loc[i] = cmd_[i];
     }
-
-
-
+    if (PROFILE)
+        prof->sq_cmd_copy += nvm_profile_clock() - copy_start;
 
     //uint32_t new_tail = pos;
     /*
@@ -272,6 +311,9 @@ uint16_t sq_enqueue(nvm_queue_t* sq, nvm_cmd_t* cmd, simt::atomic<uint64_t, simt
     } while(!proceed);
     */
     //sq->tickets[pos].val.store(id + 1, simt::memory_order_release);
+    uint64_t tail_start = 0;
+    if (PROFILE)
+        tail_start = nvm_profile_clock();
     if (pc_tail) {
         *cur_pc_tail = pc_tail->load(simt::memory_order_relaxed);
     }
@@ -300,7 +342,12 @@ uint16_t sq_enqueue(nvm_queue_t* sq, nvm_cmd_t* cmd, simt::atomic<uint64_t, simt
                         *cur_pc_tail = pc_tail->load(simt::memory_order_acquire);
                     }
 //                    *(sq->db) = new_db;
+                    uint64_t mmio_start = 0;
+                    if (PROFILE)
+                        mmio_start = nvm_profile_clock();
 		    asm volatile ("st.mmio.relaxed.sys.global.u32 [%0], %1;" :: "l"(sq->db),"r"(new_db) : "memory");
+                    if (PROFILE)
+                        prof->sq_mmio += nvm_profile_clock() - mmio_start;
 
                     //sq->tail_copy.store(new_tail, simt::memory_order_release);
 //	            printf("wrote SQ_db: %llu\tcur_tail: %llu\tmove_count: %llu\tsq_tail: %llu\tsq_head: %llu\n", (unsigned long long) new_db, (unsigned long long) cur_tail, (unsigned long long) tail_move_count, (unsigned long long) (new_tail),  (unsigned long long)(sq->head.load(simt::memory_order_acquire)));
@@ -325,6 +372,11 @@ uint16_t sq_enqueue(nvm_queue_t* sq, nvm_cmd_t* cmd, simt::atomic<uint64_t, simt
 
 
     sq->tickets[pos].val.fetch_add(1, simt::memory_order_acq_rel);
+    if (PROFILE) {
+        uint64_t now = nvm_profile_clock();
+        prof->sq_tail_advance += now - tail_start;
+        prof->sq_enqueue_total += now - prof_start;
+    }
     return pos;
 
 }
@@ -375,8 +427,12 @@ void sq_dequeue(nvm_queue_t* sq, uint16_t pos) {
 
 }
 
+template <bool PROFILE=false>
 inline __device__
-uint32_t cq_poll(nvm_queue_t* cq, uint16_t search_cid, uint32_t* loc_ = NULL, uint32_t* cq_head = NULL) {
+uint32_t cq_poll(nvm_queue_t* cq, uint16_t search_cid, uint32_t* loc_ = NULL, uint32_t* cq_head = NULL, nvm_read_profile_t* prof=NULL) {
+    uint64_t prof_start = 0;
+    if (PROFILE)
+        prof_start = nvm_profile_clock();
     uint64_t j = 0;
     unsigned int ns = 8;
     //uint64_t tid = threadIdx.x + blockIdx.x * blockDim.x;
@@ -384,6 +440,9 @@ uint32_t cq_poll(nvm_queue_t* cq, uint16_t search_cid, uint32_t* loc_ = NULL, ui
     while (true) {
         uint32_t head = cq->head.load(simt::memory_order_relaxed);
 
+        uint64_t scan_start = 0;
+        if (PROFILE)
+            scan_start = nvm_profile_clock();
         for (size_t i = 0; i < cq->qs_minus_1; i++) {
             uint32_t cur_head = head + i;
             bool search_phase = ((~(cur_head >> cq->qs_log2)) & 0x01);
@@ -403,14 +462,23 @@ uint32_t cq_poll(nvm_queue_t* cq, uint16_t search_cid, uint32_t* loc_ = NULL, ui
             if ((cid == search_cid) && (phase == search_phase)){
                  //if ((cpl_entry >> 17) != 0)
                  //     printf("NVM Error: %llx\tcid: %llu\n", (unsigned long long) (cpl_entry >> 17), (unsigned long long) search_cid);
-                *cq_head = head;
-                *loc_ = cur_head;
+                if (PROFILE) {
+                    uint64_t now = nvm_profile_clock();
+                    prof->cq_poll_scan += now - scan_start;
+                    prof->cq_poll_total += now - prof_start;
+                }
+                if (cq_head)
+                    *cq_head = head;
+                if (loc_)
+                    *loc_ = cur_head;
                 return loc;
             }
             if (phase != search_phase)
                 break;
             //__nanosleep(1000);
         }
+        if (PROFILE)
+            prof->cq_poll_scan += nvm_profile_clock() - scan_start;
         j++;
 #if defined(__CUDACC__) && (__CUDA_ARCH__ >= 700 || !defined(__CUDA_ARCH__))
          __nanosleep(ns);
@@ -421,11 +489,24 @@ uint32_t cq_poll(nvm_queue_t* cq, uint16_t search_cid, uint32_t* loc_ = NULL, ui
     }
 }
 
+template <bool PROFILE=false>
 inline __device__
-void cq_dequeue(nvm_queue_t* cq, uint16_t pos, nvm_queue_t* sq, uint32_t loc_ = 0, uint32_t cur_head_ = 0) {
+void cq_dequeue(nvm_queue_t* cq, uint16_t pos, nvm_queue_t* sq, uint32_t loc_ = 0, uint32_t cur_head_ = 0, nvm_read_profile_t* prof=NULL) {
+    uint64_t prof_start = 0;
+    if (PROFILE)
+        prof_start = nvm_profile_clock();
+
+    uint64_t tail_atomic_start = 0;
+    if (PROFILE)
+        tail_atomic_start = nvm_profile_clock();
     cq->tail.fetch_add(1, simt::memory_order_acq_rel);
+    if (PROFILE)
+        prof->cq_tail_atomic += nvm_profile_clock() - tail_atomic_start;
 
     unsigned int ns = 8;
+    uint64_t pos_lock_start = 0;
+    if (PROFILE)
+        pos_lock_start = nvm_profile_clock();
     while ((cq->pos_locks[pos].val.load(simt::memory_order_relaxed) != 0) ) {
         /*if (k++ % 100 == 0)   {
             printf("tid: %llu\tpos: %llu\tticket: %llu\tid: %llu\ttickets_pos: %llu\tqueue_head: %llu\tqueue_tail: %llu\n",
@@ -456,8 +537,13 @@ void cq_dequeue(nvm_queue_t* cq, uint16_t pos, nvm_queue_t* sq, uint32_t loc_ = 
         }
 #endif
     }
+    if (PROFILE)
+        prof->cq_pos_lock += nvm_profile_clock() - pos_lock_start;
 
     //uint32_t pos = cq_poll(cq, cid);
+    uint64_t head_start = 0;
+    if (PROFILE)
+        head_start = nvm_profile_clock();
     cq->head_mark[pos].val.store(LOCKED, simt::memory_order_release);
 
 
@@ -478,7 +564,12 @@ void cq_dequeue(nvm_queue_t* cq, uint16_t pos, nvm_queue_t* sq, uint32_t loc_ = 
                     uint32_t new_db = (new_head) & (cq->qs_minus_1);
 
                     //*(cq->db) = new_db;
+                    uint64_t mmio_start = 0;
+                    if (PROFILE)
+                        mmio_start = nvm_profile_clock();
                     asm volatile ("st.mmio.relaxed.sys.global.u32 [%0], %1;" :: "l"(cq->db),"r"(new_db) : "memory");
+                    if (PROFILE)
+                        prof->cq_mmio += nvm_profile_clock() - mmio_start;
 
 		    //cq->head_copy.store(new_head, simt::memory_order_release);
 //                    printf("wrote CQ_db: %llu\tcur_head: %llu\tmove_count: %llu\tcq_head: %llu\tcq_tail: %llu\n", (unsigned long long) new_db, (unsigned long long) cur_head, (unsigned long long) head_move_count, (unsigned long long) (new_head),  (unsigned long long)(cq->tail.load(simt::memory_order_acquire)));
@@ -499,12 +590,17 @@ void cq_dequeue(nvm_queue_t* cq, uint16_t pos, nvm_queue_t* sq, uint32_t loc_ = 
 #endif
             }
     }
+    if (PROFILE)
+        prof->cq_head_advance += nvm_profile_clock() - head_start;
 
 
 	uint64_t j = 0;
     uint32_t new_head = cq->head.load(simt::memory_order_relaxed);
     ns = 8;
 //    uint32_t cur_head_mod = cur_head_ & (cq->qs_minus_1);
+    uint64_t wait_start = 0;
+    if (PROFILE)
+        wait_start = nvm_profile_clock();
     do {
         //      uint32_t new_head_mod = new_head & (cq->qs_minus_1);
 
@@ -530,8 +626,12 @@ void cq_dequeue(nvm_queue_t* cq, uint16_t pos, nvm_queue_t* sq, uint32_t loc_ = 
         }
 #endif
     } while(true);
+    if (PROFILE)
+        prof->cq_visibility_wait += nvm_profile_clock() - wait_start;
 
     cq->pos_locks[pos].val.store(0, simt::memory_order_release);
+    if (PROFILE)
+        prof->cq_dequeue_total += nvm_profile_clock() - prof_start;
 }
 
 //#ifndef __CUDACC__

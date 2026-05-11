@@ -28,6 +28,8 @@
 #include <util.h>
 #include <iostream>
 #include <fstream>
+#include <cmath>
+#include <iomanip>
 #include <byteswap.h>
 #ifdef __DIS_CLUSTER__
 #include <sisci_api.h>
@@ -42,6 +44,83 @@ using std::string;
 const char* const sam_ctrls_paths[] = {"/dev/libnvm0", "/dev/libnvm1", "/dev/libnvm2", "/dev/libnvm3", "/dev/libnvm4", "/dev/libnvm5", "/dev/libnvm6", "/dev/libnvm7", "/dev/libnvm8", "/dev/libnvm9"};
 const char* const intel_ctrls_paths[] = {"/dev/libnvm0", "/dev/libnvm1", "/dev/libnvm2", "/dev/libnvm3", "/dev/libnvm4", "/dev/libnvm5", "/dev/libnvm6", "/dev/libnvm7", "/dev/libnvm8", "/dev/libnvm9"};
 //const char* const ctrls_paths[] = {"/dev/libnvm0", "/dev/libnvm1", "/dev/libnvm2", "/dev/libnvm3", "/dev/libnvm4", "/dev/libnvm5", "/dev/libnvm6", "/dev/libnvm7", "/dev/libnvm8", "/dev/libnvm9", "/dev/libnvm10", "/dev/libnvm11", "/dev/libnvm12", "/dev/libnvm13", "/dev/libnvm14", "/dev/libnvm15", "/dev/libnvm16", "/dev/libnvm17", "/dev/libnvm18", "/dev/libnvm19", "/dev/libnvm20", "/dev/libnvm21", "/dev/libnvm22", "/dev/libnvm23", "/dev/libnvm24","/dev/libnvm25", "/dev/libnvm26", "/dev/libnvm27", "/dev/libnvm28", "/dev/libnvm29", "/dev/libnvm30", "/dev/libnvm31"};
+
+static const char* const profile_interval_names[] = {
+    "read_total",
+    "cid_acquire",
+    "cmd_build",
+    "sq_enqueue_total",
+    "sq_ticket_wait",
+    "sq_cmd_copy",
+    "sq_tail_advance",
+    "sq_mmio",
+    "cq_poll_total",
+    "cq_poll_scan",
+    "cq_tail_atomic",
+    "cq_dequeue_total",
+    "cq_pos_lock",
+    "cq_head_advance",
+    "cq_mmio",
+    "cq_visibility_wait",
+    "cid_release"
+};
+
+static const size_t profile_interval_count = sizeof(profile_interval_names) / sizeof(profile_interval_names[0]);
+static_assert(sizeof(nvm_read_profile_t) == profile_interval_count * sizeof(uint64_t), "profile row layout must match CSV columns");
+
+static uint64_t profile_value(const nvm_read_profile_t& row, size_t idx)
+{
+    const uint64_t* values = reinterpret_cast<const uint64_t*>(&row);
+    return values[idx];
+}
+
+static void write_profile_csv(const char* path, const std::vector<nvm_read_profile_t>& rows, uint64_t n_threads, uint64_t reqs_per_thread)
+{
+    std::ofstream out(path, std::ios::out | std::ios::trunc);
+    if (!out)
+        throw error(std::string("Failed to open profile CSV: ") + path);
+
+    out << "thread,iter";
+    for (size_t i = 0; i < profile_interval_count; i++)
+        out << "," << profile_interval_names[i];
+    out << "\n";
+
+    std::vector<double> sums(profile_interval_count, 0.0);
+    std::vector<double> sum_squares(profile_interval_count, 0.0);
+    const double row_count = static_cast<double>(rows.size());
+
+    for (uint64_t tid = 0; tid < n_threads; tid++) {
+        for (uint64_t iter = 0; iter < reqs_per_thread; iter++) {
+            const nvm_read_profile_t& row = rows[tid * reqs_per_thread + iter];
+            out << tid << "," << iter;
+            for (size_t col = 0; col < profile_interval_count; col++) {
+                uint64_t value = profile_value(row, col);
+                sums[col] += static_cast<double>(value);
+                sum_squares[col] += static_cast<double>(value) * static_cast<double>(value);
+                out << "," << value;
+            }
+            out << "\n";
+        }
+    }
+
+    out << std::fixed << std::setprecision(3);
+    out << "AVERAGE,";
+    for (size_t col = 0; col < profile_interval_count; col++) {
+        double avg = row_count == 0.0 ? 0.0 : sums[col] / row_count;
+        out << "," << avg;
+    }
+    out << "\n";
+
+    out << "STDDEV,";
+    for (size_t col = 0; col < profile_interval_count; col++) {
+        double avg = row_count == 0.0 ? 0.0 : sums[col] / row_count;
+        double variance = row_count == 0.0 ? 0.0 : (sum_squares[col] / row_count) - (avg * avg);
+        if (variance < 0.0)
+            variance = 0.0;
+        out << "," << std::sqrt(variance);
+    }
+    out << "\n";
+}
 
 
 #define SIZE (8*4096)
@@ -96,8 +175,9 @@ __device__ void read_data(page_cache_t* pc, QueuePair* qp, const uint64_t starti
 }
 
 */
+template <bool PROFILE>
 __global__ __launch_bounds__(64,32)
-void sequential_access_kernel(Controller** ctrls, page_cache_d_t* pc,  uint32_t req_size, uint32_t n_reqs, unsigned long long* req_count, uint32_t num_ctrls, uint64_t reqs_per_thread, uint32_t access_type, uint8_t* access_type_assignment) {
+void sequential_access_kernel(Controller** ctrls, page_cache_d_t* pc,  uint32_t req_size, uint32_t n_reqs, unsigned long long* req_count, uint32_t num_ctrls, uint64_t reqs_per_thread, uint32_t access_type, uint8_t* access_type_assignment, nvm_read_profile_t* profiles) {
     //printf("in threads\n");
     uint64_t tid = blockIdx.x * blockDim.x + threadIdx.x;
     uint32_t laneid = lane_id();
@@ -129,7 +209,13 @@ void sequential_access_kernel(Controller** ctrls, page_cache_d_t* pc,  uint32_t 
                 access_data(pc, (ctrls[ctrl]->d_qps)+(queue),start_block, n_blocks, tid, opcode);
             }
             else if (access_type == READ) {
-                read_data(pc, (ctrls[ctrl]->d_qps)+(queue),start_block, n_blocks, tid);
+                if (PROFILE) {
+                    nvm_read_profile_t* prof = &profiles[tid * reqs_per_thread + i];
+                    read_data_profiled(pc, (ctrls[ctrl]->d_qps)+(queue),start_block, n_blocks, tid, prof);
+                }
+                else {
+                    read_data(pc, (ctrls[ctrl]->d_qps)+(queue),start_block, n_blocks, tid);
+                }
 
             }
             else {
@@ -147,8 +233,9 @@ void sequential_access_kernel(Controller** ctrls, page_cache_d_t* pc,  uint32_t 
 
 }
 
+template <bool PROFILE>
 __global__ //__launch_bounds__(64,32)
-void random_access_kernel(Controller** ctrls, page_cache_d_t* pc,  uint32_t req_size, uint32_t n_reqs, unsigned long long* req_count, uint32_t num_ctrls, uint64_t* assignment, uint64_t reqs_per_thread, uint32_t access_type, uint8_t* access_type_assignment) {
+void random_access_kernel(Controller** ctrls, page_cache_d_t* pc,  uint32_t req_size, uint32_t n_reqs, unsigned long long* req_count, uint32_t num_ctrls, uint64_t* assignment, uint64_t reqs_per_thread, uint32_t access_type, uint8_t* access_type_assignment, nvm_read_profile_t* profiles) {
     //printf("in threads\n");
     uint64_t tid = blockIdx.x * blockDim.x + threadIdx.x;
     uint32_t laneid = lane_id();
@@ -181,7 +268,13 @@ void random_access_kernel(Controller** ctrls, page_cache_d_t* pc,  uint32_t req_
                 access_data(pc, (ctrls[ctrl]->d_qps)+(queue),start_block, n_blocks, tid, opcode);
             }
             else if (access_type == READ) {
-                read_data(pc, (ctrls[ctrl]->d_qps)+(queue),start_block, n_blocks, tid);
+                if (PROFILE) {
+                    nvm_read_profile_t* prof = &profiles[tid * reqs_per_thread + i];
+                    read_data_profiled(pc, (ctrls[ctrl]->d_qps)+(queue),start_block, n_blocks, tid, prof);
+                }
+                else {
+                    read_data(pc, (ctrls[ctrl]->d_qps)+(queue),start_block, n_blocks, tid);
+                }
 
             }
             else {
@@ -340,11 +433,29 @@ int main(int argc, char** argv) {
             cuda_err_chk(cudaMalloc(&d_access_assignment, n_threads*sizeof(uint8_t)));
             cuda_err_chk(cudaMemcpy(d_access_assignment, access_assignment, n_threads*sizeof(uint8_t), cudaMemcpyHostToDevice));
         }
+        nvm_read_profile_t* d_profiles = NULL;
+        const bool profile_enabled = settings.profileCsv != nullptr && settings.accessType == READ;
+        const uint64_t profile_rows = n_threads * settings.numReqs;
+        if (settings.profileCsv != nullptr && settings.accessType != READ) {
+            std::cerr << "read_data profiling is only recorded for access_type=0; skipping profile CSV\n";
+        }
+        if (profile_enabled) {
+            cuda_err_chk(cudaMalloc(&d_profiles, profile_rows * sizeof(nvm_read_profile_t)));
+            cuda_err_chk(cudaMemset(d_profiles, 0, profile_rows * sizeof(nvm_read_profile_t)));
+        }
         std::cout << "atlaunch kernel\n";
-        if (settings.random)
-            random_access_kernel<<<g_size, b_size>>>(h_pc.pdt.d_ctrls, d_pc, page_size, n_threads, d_req_count, settings.n_ctrls, d_assignment, settings.numReqs, settings.accessType, d_access_assignment);
-        else
-            sequential_access_kernel<<<g_size, b_size>>>(h_pc.pdt.d_ctrls, d_pc, page_size, n_threads, d_req_count, settings.n_ctrls, settings.numReqs, settings.accessType, d_access_assignment);
+        if (settings.random) {
+            if (profile_enabled)
+                random_access_kernel<true><<<g_size, b_size>>>(h_pc.pdt.d_ctrls, d_pc, page_size, n_threads, d_req_count, settings.n_ctrls, d_assignment, settings.numReqs, settings.accessType, d_access_assignment, d_profiles);
+            else
+                random_access_kernel<false><<<g_size, b_size>>>(h_pc.pdt.d_ctrls, d_pc, page_size, n_threads, d_req_count, settings.n_ctrls, d_assignment, settings.numReqs, settings.accessType, d_access_assignment, d_profiles);
+        }
+        else {
+            if (profile_enabled)
+                sequential_access_kernel<true><<<g_size, b_size>>>(h_pc.pdt.d_ctrls, d_pc, page_size, n_threads, d_req_count, settings.n_ctrls, settings.numReqs, settings.accessType, d_access_assignment, d_profiles);
+            else
+                sequential_access_kernel<false><<<g_size, b_size>>>(h_pc.pdt.d_ctrls, d_pc, page_size, n_threads, d_req_count, settings.n_ctrls, settings.numReqs, settings.accessType, d_access_assignment, d_profiles);
+        }
         Event after;
 
         //print_cache_kernel<<<1,1>>>(d_pc);
@@ -353,6 +464,12 @@ int main(int argc, char** argv) {
 
         //cuda_err_chk(cudaMemcpy(ret_array, h_pc.base_addr,page_size*n_pages, cudaMemcpyDeviceToHost));
         cuda_err_chk(cudaDeviceSynchronize());
+        if (profile_enabled) {
+            std::vector<nvm_read_profile_t> profiles(profile_rows);
+            cuda_err_chk(cudaMemcpy(profiles.data(), d_profiles, profile_rows * sizeof(nvm_read_profile_t), cudaMemcpyDeviceToHost));
+            write_profile_csv(settings.profileCsv, profiles, n_threads, settings.numReqs);
+            cuda_err_chk(cudaFree(d_profiles));
+        }
         if (input_f != nullptr) {
             cuda_err_chk(cudaMemcpy(map_in, h_pc.pdt.base_addr,  std::min((uint64_t)sb_in.st_size, total_cache_size), cudaMemcpyDeviceToHost));
             munmap(map_in, sb_in.st_size);

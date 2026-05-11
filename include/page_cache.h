@@ -551,6 +551,7 @@ struct page_cache_d_t {
 
 
 __device__ void read_data(page_cache_d_t* pc, QueuePair* qp, const uint64_t starting_lba, const uint64_t n_blocks, const unsigned long long pc_entry);
+__device__ void read_data_profiled(page_cache_d_t* pc, QueuePair* qp, const uint64_t starting_lba, const uint64_t n_blocks, const unsigned long long pc_entry, nvm_read_profile_t* prof);
 __device__ void write_data(page_cache_d_t* pc, QueuePair* qp, const uint64_t starting_lba, const uint64_t n_blocks, const unsigned long long pc_entry);
 
 __forceinline__
@@ -2053,6 +2054,57 @@ inline __device__ void read_data(page_cache_d_t* pc, QueuePair* qp, const uint64
 
 }
 
+inline __device__ void read_data_profiled(page_cache_d_t* pc, QueuePair* qp, const uint64_t starting_lba, const uint64_t n_blocks, const unsigned long long pc_entry, nvm_read_profile_t* prof) {
+    uint64_t total_start = 0;
+    if (prof)
+        total_start = nvm_profile_clock();
+
+    nvm_cmd_t cmd;
+    uint64_t start = 0;
+    if (prof)
+        start = nvm_profile_clock();
+    uint16_t cid = get_cid(&(qp->sq));
+    if (prof)
+        prof->cid_acquire += nvm_profile_clock() - start;
+
+    if (prof)
+        start = nvm_profile_clock();
+    nvm_cmd_header(&cmd, cid, NVM_IO_READ, qp->nvmNamespace);
+    uint64_t prp1 = pc->prp1[pc_entry];
+    uint64_t prp2 = 0;
+    if (pc->prps)
+        prp2 = pc->prp2[pc_entry];
+    nvm_cmd_data_ptr(&cmd, prp1, prp2);
+    nvm_cmd_rw_blks(&cmd, starting_lba, n_blocks);
+    if (prof)
+        prof->cmd_build += nvm_profile_clock() - start;
+
+    uint16_t sq_pos = sq_enqueue<true>(&qp->sq, &cmd, NULL, NULL, prof);
+    uint32_t head, head_;
+    uint64_t pc_pos;
+    uint64_t pc_prev_head;
+
+    uint32_t cq_pos = cq_poll<true>(&qp->cq, cid, &head, &head_, prof);
+
+    if (prof)
+        start = nvm_profile_clock();
+    qp->cq.tail.fetch_add(1, simt::memory_order_acq_rel);
+    pc_prev_head = pc->q_head->load(simt::memory_order_relaxed);
+    pc_pos = pc->q_tail->fetch_add(1, simt::memory_order_acq_rel);
+    if (prof)
+        prof->cq_tail_atomic += nvm_profile_clock() - start;
+
+    cq_dequeue<true>(&qp->cq, cq_pos, &qp->sq, head, head_, prof);
+    enqueue_second(pc, qp, starting_lba, &cmd, cid, pc_pos, pc_prev_head);
+    if (prof)
+        start = nvm_profile_clock();
+    put_cid(&qp->sq, cid);
+    if (prof) {
+        uint64_t now = nvm_profile_clock();
+        prof->cid_release += now - start;
+        prof->read_total += now - total_start;
+    }
+}
 
 inline __device__ void write_data(page_cache_d_t* pc, QueuePair* qp, const uint64_t starting_lba, const uint64_t n_blocks, const unsigned long long pc_entry) {
     //uint64_t starting_lba = starting_byte >> qp->block_size_log;
