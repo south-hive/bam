@@ -1,18 +1,38 @@
 ifneq ($(KERNELRELEASE),)
-	src := @module_root@
+	# Kbuild context — invoked by the kernel build system.
+	# Sources are expected in $(src) which Kbuild sets automatically to
+	# the M=... directory. We don't override $(src) here (Linux 6.x
+	# Kbuild ignores manual src override and requires real .c files in
+	# M); the `default` target below symlinks sources from
+	# @module_root@ into @module_output@ before invoking modules.
 	obj-m := @CMAKE_PROJECT_NAME@.o
 	@CMAKE_PROJECT_NAME@-objs := pci.o list.o ctrl.o map.o
 	ccflags-y += @module_ccflags@
 	KBUILD_EXTRA_SYMBOLS := @module_symbols@
 else
 
-.PHONY: default reload unload load clean install
+.PHONY: default reload unload load clean install link-sources
 
-default:
+# `default` 를 가장 먼저 선언해 make 의 first-goal 로 만든다.
+# (link-sources 가 위에 있으면 인자 없는 `make` 가 그것만 실행해 버림)
+default: link-sources
 	$(MAKE) -C @KERNEL@ M=@module_output@ modules
 
+# Linux 6.x Kbuild expects .c/.h files inside the M=<dir> directory.
+# Older kernels honored a manual `src := <other-dir>` override, but
+# newer kernels do not — they look for sources in M itself. To keep
+# the out-of-source CMake layout working, we symlink the source files
+# from @module_root@ into @module_output@ before invoking the kernel
+# build. The links are recreated each build (idempotent via ln -sf)
+# and removed on `clean`.
+link-sources:
+	@for f in @module_root@/*.c @module_root@/*.h; do \
+		[ -e "$$f" ] && ln -sf "$$f" @module_output@/; \
+	done; true
+
 clean:
-	$(MAKE) -C @KERNEL@ M=@module_output@ clean
+	-$(MAKE) -C @KERNEL@ M=@module_output@ clean
+	@find @module_output@ -maxdepth 1 -type l \( -name '*.c' -o -name '*.h' \) -delete
 
 reload: unload load
 
