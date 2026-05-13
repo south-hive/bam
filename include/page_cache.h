@@ -1537,9 +1537,13 @@ uint32_t page_cache_d_t::find_slot(uint64_t address, uint64_t range_id, const ui
 }
 
 inline __device__ void poll_async(QueuePair* qp, uint16_t cid, uint16_t sq_pos) {
-    uint32_t cq_pos = cq_poll(&qp->cq, cid);
-    cq_dequeue(&qp->cq, cq_pos, &qp->sq);
-    put_cid(&qp->sq, cid);
+    (void) cid;
+    (void) sq_pos;
+    uint32_t claimed_pos, wait_from;
+    uint32_t cq_slot = cq_poll(&qp->cq, &claimed_pos, &wait_from);
+    uint16_t cpl_cid = ((nvm_cpl_t*)qp->cq.vaddr)[cq_slot].dword[3] & 0xffff;
+    cq_dequeue(&qp->cq, cq_slot, &qp->sq, claimed_pos, wait_from);
+    put_cid(&qp->sq, cpl_cid);
 }
 
 inline __device__ void access_data_async(page_cache_d_t* pc, QueuePair* qp, const uint64_t starting_lba, const uint64_t n_blocks, const unsigned long long pc_entry, const uint8_t opcode, uint16_t * cid, uint16_t* sq_pos) {
@@ -1557,6 +1561,7 @@ inline __device__ void access_data_async(page_cache_d_t* pc, QueuePair* qp, cons
 }
 
 inline __device__ void enqueue_second(page_cache_d_t* pc, QueuePair* qp, const uint64_t starting_lba, nvm_cmd_t* cmd, const uint16_t cid, const uint64_t pc_pos, const uint64_t pc_prev_head) {
+    (void) cid;
     nvm_cmd_rw_blks(cmd, starting_lba, 1);
     unsigned int ns = 8;
     do {
@@ -1581,13 +1586,14 @@ inline __device__ void enqueue_second(page_cache_d_t* pc, QueuePair* qp, const u
                 uint64_t cur_pc_tail;// = pc->q_tail.load(simt::memory_order_acquire);
 
                 uint16_t sq_pos = sq_enqueue(&qp->sq, cmd, pc->q_tail, &cur_pc_tail);
-                uint32_t head, head_;
-                uint32_t cq_pos = cq_poll(&qp->cq, cid, &head, &head_);
+                (void) sq_pos;
+                uint32_t claimed_pos, wait_from;
+                uint32_t cq_slot = cq_poll(&qp->cq, &claimed_pos, &wait_from);
 
                 pc->q_head->store(cur_pc_tail, simt::memory_order_release);
                 pc->q_lock->store(0, simt::memory_order_release);
                 pc->extra_reads->fetch_add(1, simt::memory_order_relaxed);
-                cq_dequeue(&qp->cq, cq_pos, &qp->sq, head, head_);
+                cq_dequeue(&qp->cq, cq_slot, &qp->sq, claimed_pos, wait_from);
 
                 break;
             }
@@ -1614,14 +1620,13 @@ inline __device__ void read_data(page_cache_d_t* pc, QueuePair* qp, const uint64
     nvm_cmd_data_ptr(&cmd, prp1, prp2);
     nvm_cmd_rw_blks(&cmd, starting_lba, n_blocks);
     uint16_t sq_pos = sq_enqueue(&qp->sq, &cmd);
-    uint32_t head, head_;
+    (void) sq_pos;
+    uint32_t claimed_pos, wait_from;
+    uint32_t cq_slot = cq_poll(&qp->cq, &claimed_pos, &wait_from);
+    uint16_t cpl_cid = ((nvm_cpl_t*)qp->cq.vaddr)[cq_slot].dword[3] & 0xffff;
 
-    uint32_t cq_pos = cq_poll(&qp->cq, cid, &head, &head_);
-
-    qp->cq.tail.fetch_add(1, simt::memory_order_acq_rel);
-
-    cq_dequeue(&qp->cq, cq_pos, &qp->sq, head, head_);
-    put_cid(&qp->sq, cid);
+    cq_dequeue(&qp->cq, cq_slot, &qp->sq, claimed_pos, wait_from);
+    put_cid(&qp->sq, cpl_cid);
 }
 
 inline __device__ void write_data(page_cache_d_t* pc, QueuePair* qp, const uint64_t starting_lba, const uint64_t n_blocks, const unsigned long long pc_entry) {
@@ -1636,13 +1641,13 @@ inline __device__ void write_data(page_cache_d_t* pc, QueuePair* qp, const uint6
     nvm_cmd_data_ptr(&cmd, prp1, prp2);
     nvm_cmd_rw_blks(&cmd, starting_lba, n_blocks);
     uint16_t sq_pos = sq_enqueue(&qp->sq, &cmd);
-    uint32_t head, head_;
+    (void) sq_pos;
+    uint32_t claimed_pos, wait_from;
+    uint32_t cq_slot = cq_poll(&qp->cq, &claimed_pos, &wait_from);
+    uint16_t cpl_cid = ((nvm_cpl_t*)qp->cq.vaddr)[cq_slot].dword[3] & 0xffff;
+    cq_dequeue(&qp->cq, cq_slot, &qp->sq, claimed_pos, wait_from);
 
-    uint32_t cq_pos = cq_poll(&qp->cq, cid, &head, &head_);
-    qp->cq.tail.fetch_add(1, simt::memory_order_acq_rel);
-    cq_dequeue(&qp->cq, cq_pos, &qp->sq, head, head_);
-
-    put_cid(&qp->sq, cid);
+    put_cid(&qp->sq, cpl_cid);
 }
 
 inline __device__ void access_data(page_cache_d_t* pc, QueuePair* qp, const uint64_t starting_lba, const uint64_t n_blocks, const unsigned long long pc_entry, const uint8_t opcode) {
@@ -1657,11 +1662,14 @@ inline __device__ void access_data(page_cache_d_t* pc, QueuePair* qp, const uint
     nvm_cmd_data_ptr(&cmd, prp1, prp2);
     nvm_cmd_rw_blks(&cmd, starting_lba, n_blocks);
     uint16_t sq_pos = sq_enqueue(&qp->sq, &cmd);
+    (void) sq_pos;
 
-    uint32_t cq_pos = cq_poll(&qp->cq, cid);
-    cq_dequeue(&qp->cq, cq_pos, &qp->sq);
+    uint32_t claimed_pos, wait_from;
+    uint32_t cq_slot = cq_poll(&qp->cq, &claimed_pos, &wait_from);
+    uint16_t cpl_cid = ((nvm_cpl_t*)qp->cq.vaddr)[cq_slot].dword[3] & 0xffff;
+    cq_dequeue(&qp->cq, cq_slot, &qp->sq, claimed_pos, wait_from);
 
-    put_cid(&qp->sq, cid);
+    put_cid(&qp->sq, cpl_cid);
 }
 
 #endif // __PAGE_CACHE_H__

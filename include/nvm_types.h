@@ -105,6 +105,14 @@ typedef struct
     simt::atomic<uint32_t, simt::thread_scope_device> in_ticket;
     uint8_t pad6[28];
     simt::atomic<uint32_t, simt::thread_scope_device> cid_ticket;
+    // CQ tail-probe representative election lock (1 = held).
+    simt::atomic<uint32_t, simt::thread_scope_device> cq_poll_lock;
+    uint8_t pad7[28];
+    // CQ phase-probe claim ticket counter (monotonic). Used by cq_poll to
+    // hand out tickets via fetch_add(1); indexed via `& qs_minus_1`.
+    // Independent of `head` (host-consumed).
+    simt::atomic<uint32_t, simt::thread_scope_device> cq_claim;
+    uint8_t pad8[28];
     padded_struct* tickets;
 
     padded_struct* head_mark;

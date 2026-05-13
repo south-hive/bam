@@ -85,12 +85,14 @@ __device__ void read_data(page_cache_t* pc, QueuePair* qp, const uint64_t starti
     nvm_cmd_rw_blks(&cmd, starting_lba, n_blocks);
     uint16_t sq_pos = sq_enqueue(&qp->sq, &cmd);
 
-    uint32_t cq_pos = cq_poll(&qp->cq, cid);
+    uint32_t claimed_pos, wait_from;
+    uint32_t cq_slot = cq_poll(&qp->cq, &claimed_pos, &wait_from);
+    uint16_t cpl_cid = ((nvm_cpl_t*)qp->cq.vaddr)[cq_slot].dword[3] & 0xffff;
     sq_dequeue(&qp->sq, sq_pos);
-    cq_dequeue(&qp->cq, cq_pos);
+    cq_dequeue(&qp->cq, cq_slot, &qp->sq, claimed_pos, wait_from);
 
 
-    put_cid(&qp->sq, cid);
+    put_cid(&qp->sq, cpl_cid);
 
 
 }

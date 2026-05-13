@@ -234,43 +234,53 @@ void sq_dequeue(nvm_queue_t* sq, uint16_t pos) {
 }
 
 inline __device__
-uint32_t cq_poll(nvm_queue_t* cq, uint16_t search_cid, uint32_t* loc_ = NULL, uint32_t* cq_head = NULL) {
-    uint64_t j = 0;
+uint32_t cq_poll(nvm_queue_t* cq, uint32_t* claimed_pos = NULL, uint32_t* wait_from = NULL) {
+    uint32_t ticket = cq->cq_claim.fetch_add(1, simt::memory_order_relaxed);
     unsigned int ns = 8;
-    while (true) {
-        uint32_t head = cq->head.load(simt::memory_order_relaxed);
-
-        for (size_t i = 0; i < cq->qs_minus_1; i++) {
-            uint32_t cur_head = head + i;
-            bool search_phase = ((~(cur_head >> cq->qs_log2)) & 0x01);
-            uint32_t loc = cur_head & (cq->qs_minus_1);
-            uint32_t cpl_entry = ((nvm_cpl_t*)cq->vaddr)[loc].dword[3];
-            uint32_t cid = (cpl_entry & 0x0000ffff);
-            bool phase = (cpl_entry & 0x00010000) >> 16;
-            if ((cid == search_cid) && (phase == search_phase)){
-                *cq_head = head;
-                *loc_ = cur_head;
-                return loc;
-            }
-            if (phase != search_phase)
-                break;
+    do {
+        bool acquired = false;
+        if (cq->cq_poll_lock.load(simt::memory_order_relaxed) == UNLOCKED) {
+            acquired = (cq->cq_poll_lock.fetch_or(LOCKED, simt::memory_order_acquire) == UNLOCKED);
         }
-        j++;
+        if (acquired) {
+            uint32_t t = cq->tail.load(simt::memory_order_relaxed);
+            uint32_t expected = ((~(t >> cq->qs_log2)) & 1);
+            while (true) {
+                uint32_t loc = t & cq->qs_minus_1;
+                // Plain read for speed. This loop only consumes the phase bit.
+                uint32_t cpl = ((nvm_cpl_t*)cq->vaddr)[loc].dword[3];
+                uint32_t phase = (cpl & 0x00010000) >> 16;
+                if (phase != expected) {
+                    break;
+                }
+                t++;
+                expected = ((~(t >> cq->qs_log2)) & 1);
+            }
+            cq->tail.store(t, simt::memory_order_release);
+            cq->cq_poll_lock.store(UNLOCKED, simt::memory_order_release);
+        }
+
+        uint32_t observed_tail = cq->tail.load(simt::memory_order_acquire);
+        if ((int32_t)(observed_tail - ticket) > 0) {
+            break;
+        }
 #if defined(__CUDACC__) && (__CUDA_ARCH__ >= 700 || !defined(__CUDA_ARCH__))
          __nanosleep(ns);
          if (ns < 256) {
              ns *= 2;
          }
 #endif
-    }
+    } while (true);
+
+    if (claimed_pos) *claimed_pos = ticket;
+    if (wait_from) *wait_from = ticket;
+    return ticket & cq->qs_minus_1;
 }
 
 inline __device__
-void cq_dequeue(nvm_queue_t* cq, uint16_t pos, nvm_queue_t* sq, uint32_t loc_ = 0, uint32_t cur_head_ = 0) {
-    cq->tail.fetch_add(1, simt::memory_order_acq_rel);
-
+void cq_dequeue(nvm_queue_t* cq, uint16_t cq_slot, nvm_queue_t* sq, uint32_t claimed_pos = 0, uint32_t wait_from = 0) {
     unsigned int ns = 8;
-    while ((cq->pos_locks[pos].val.load(simt::memory_order_relaxed) != 0) ) {
+    while ((cq->pos_locks[cq_slot].val.load(simt::memory_order_relaxed) != 0) ) {
 #if defined(__CUDACC__) && (__CUDA_ARCH__ >= 700 || !defined(__CUDA_ARCH__))
         __nanosleep(ns);
         if (ns < 256) {
@@ -280,7 +290,7 @@ void cq_dequeue(nvm_queue_t* cq, uint16_t pos, nvm_queue_t* sq, uint32_t loc_ = 
     }
 
     ns = 8;
-    while ((cq->pos_locks[pos].val.fetch_or(1, simt::memory_order_acquire) != 0) ) {
+    while ((cq->pos_locks[cq_slot].val.fetch_or(1, simt::memory_order_acquire) != 0) ) {
 #if defined(__CUDACC__) && (__CUDA_ARCH__ >= 700 || !defined(__CUDA_ARCH__))
         __nanosleep(ns);
         if (ns < 256) {
@@ -289,11 +299,11 @@ void cq_dequeue(nvm_queue_t* cq, uint16_t pos, nvm_queue_t* sq, uint32_t loc_ = 
 #endif
     }
 
-    cq->head_mark[pos].val.store(LOCKED, simt::memory_order_release);
+    cq->head_mark[cq_slot].val.store(LOCKED, simt::memory_order_release);
 
     bool cont = true;
     ns = 8;
-    cont = cq->head_mark[pos].val.load(simt::memory_order_relaxed) == LOCKED;
+    cont = cq->head_mark[cq_slot].val.load(simt::memory_order_relaxed) == LOCKED;
     while (cont) {
             bool new_cont = cq->head_lock.fetch_or(LOCKED, simt::memory_order_acquire) == LOCKED;
             if (!new_cont) {
@@ -312,7 +322,7 @@ void cq_dequeue(nvm_queue_t* cq, uint16_t pos, nvm_queue_t* sq, uint32_t loc_ = 
                 }
                 cq->head_lock.store(UNLOCKED, simt::memory_order_release);
             }
-            cont = cq->head_mark[pos].val.load(simt::memory_order_relaxed) == LOCKED;
+            cont = cq->head_mark[cq_slot].val.load(simt::memory_order_relaxed) == LOCKED;
             if (cont) {
 #if defined(__CUDACC__) && (__CUDA_ARCH__ >= 700 || !defined(__CUDA_ARCH__))
                 __nanosleep(ns);
@@ -323,23 +333,21 @@ void cq_dequeue(nvm_queue_t* cq, uint16_t pos, nvm_queue_t* sq, uint32_t loc_ = 
             }
     }
 
-	uint64_t j = 0;
     uint32_t new_head = cq->head.load(simt::memory_order_relaxed);
     ns = 8;
     do {
-        if (new_head > cur_head_) {
-            if ((loc_ >= cur_head_) && (loc_ < new_head))
+        if (new_head > wait_from) {
+            if ((claimed_pos >= wait_from) && (claimed_pos < new_head))
                 break;
 
         }
-        else if (new_head < cur_head_) {
-            if ((loc_ >= cur_head_))
+        else if (new_head < wait_from) {
+            if ((claimed_pos >= wait_from))
                 break;
-            if (loc_ < new_head)
+            if (claimed_pos < new_head)
                 break;
         }
 
-        j++;
         new_head = cq->head.load(simt::memory_order_relaxed);
 #if defined(__CUDACC__) && (__CUDA_ARCH__ >= 700 || !defined(__CUDA_ARCH__))
         __nanosleep(ns);
@@ -349,7 +357,7 @@ void cq_dequeue(nvm_queue_t* cq, uint16_t pos, nvm_queue_t* sq, uint32_t loc_ = 
 #endif
     } while(true);
 
-    cq->pos_locks[pos].val.store(0, simt::memory_order_release);
+    cq->pos_locks[cq_slot].val.store(0, simt::memory_order_release);
 }
 
 #endif // __NVM_PARALLEL_QUEUE_H_
