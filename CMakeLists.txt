@@ -16,7 +16,7 @@ set (NVIDIA "" CACHE PATH "Path to Nvidia driver source")
 set (KERNEL "/lib/modules/${CMAKE_SYSTEM_VERSION}/build" CACHE PATH "Path to kernel source, or module directory")
 set (FIO "" CACHE PATH "Path to FIO installation")
 
-set (nvidia_archs "70;80;90" CACHE STRING "NVIDIA compute architectures")
+set (nvidia_archs "120" CACHE STRING "NVIDIA compute architectures")
 set (no_smartio_samples true CACHE BOOL "Do not use SISCI for examples")
 set (no_smartio_benchmarks true CACHE BOOL "Do not use SISCI for benchmarks")
 set (no_smartio true CACHE BOOL "Do not use SISCI for library or examples")
@@ -186,7 +186,6 @@ install (FILES ${libnvm_include} DESTINATION "include")
 install (TARGETS libnvm DESTINATION "lib")
 
 
-
 # Create kernel module makefile
 if (NOT no_module)
     if (CUDA_FOUND AND NOT no_cuda AND EXISTS "${driver_dir}/Module.symvers")
@@ -337,18 +336,7 @@ endif ()
 
 # Add individual benchmarks
 if (CUDA_FOUND AND NOT no_cuda)
-  add_subdirectory ("${benchmarks_root}/array")
   add_subdirectory ("${benchmarks_root}/iodepth-block")
   add_subdirectory ("${benchmarks_root}/block")
-  add_subdirectory ("${benchmarks_root}/readwrite")
-  add_subdirectory ("${benchmarks_root}/bfs")
-  add_subdirectory ("${benchmarks_root}/cc")
-  add_subdirectory ("${benchmarks_root}/pagerank")
-  add_subdirectory ("${benchmarks_root}/sssp")
-  add_subdirectory ("${benchmarks_root}/sssp_float")
-  add_subdirectory ("${benchmarks_root}/pattern")
-  add_subdirectory ("${benchmarks_root}/cache")
-  add_subdirectory ("${benchmarks_root}/vectoradd")
-  #add_subdirectory ("${benchmarks_root}/scan")
   add_custom_target (benchmarks DEPENDS ${benchmark_targets})
 endif ()
