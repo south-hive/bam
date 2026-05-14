@@ -36,6 +36,9 @@
 using error = std::runtime_error;
 using std::string;
 
+#include <cuda.h>
+#include <cuda_runtime.h>
+#include <curand_kernel.h>
 
 
 //uint32_t n_ctrls = 1;
@@ -166,9 +169,13 @@ void random_access_kernel(Controller** ctrls, page_cache_d_t* pc,  uint32_t req_
     ctrl =  __shfl_sync(0xFFFFFFFF, ctrl, 0);
     queue =  __shfl_sync(0xFFFFFFFF, queue, 0);
 
+	curandState rng;
+	curand_init(1234ULL, tid, 0, &rng);
 
     if (tid < n_reqs) {
-        uint64_t start_block = (assignment[tid]*req_size) >> ctrls[ctrl]->d_qps[queue].block_size_log;
+		uint64_t start_block = (uint64_t)curand(&rng) << 32 | (uint64_t)curand(&rng);
+		start_block %= 2097152;
+		start_block = (start_block * req_size) >> ctrls[ctrl]->d_qps[queue].block_size_log;
         //uint64_t start_block = (tid*req_size) >> ctrls[ctrl]->d_qps[queue].block_size_log;
         //start_block = tid;
         uint64_t n_blocks = req_size >> ctrls[ctrl]->d_qps[queue].block_size_log; /// ctrls[ctrl].ns.lba_data_size;;
