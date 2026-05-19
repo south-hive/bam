@@ -164,7 +164,6 @@ inline Controller::Controller(const char* path, uint32_t ns_id, uint32_t cudaDev
     reserveQueues(MAX_QUEUES,MAX_QUEUES);
     n_qps = std::min(n_sqs, n_cqs);
     n_qps = std::min(n_qps, (uint16_t)numQueues);
-    printf("SQs: %d\tCQs: %d\tn_qps: %d\n", n_sqs, n_cqs, n_qps);
     h_qps = (QueuePair**) malloc(sizeof(QueuePair)*n_qps);
     cuda_err_chk(cudaMalloc((void**)&d_qps, sizeof(QueuePair)*n_qps));
     for (size_t i = 0; i < n_qps; i++) {
