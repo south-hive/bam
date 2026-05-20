@@ -53,8 +53,8 @@ void print_cache_kernel(page_cache_d_t* pc) {
 }
 
 __global__
-void new_kernel(ulonglong4* dst, ulonglong4* src, size_t num) {
-    warp_memcpy<ulonglong4>(dst, src, num);
+void new_kernel(ulonglong4_32a* dst, ulonglong4_32a* src, size_t num) {
+    warp_memcpy<ulonglong4_32a>(dst, src, num);
 
 }
 /*

@@ -115,7 +115,7 @@ uint32_t move_head_sq(nvm_queue_t* q, uint32_t cur_head) {
     return (count);
 }
 
-typedef ulonglong4 copy_type;
+typedef ulonglong4_32a copy_type;
 
 inline __device__
 uint16_t sq_enqueue(nvm_queue_t* sq, nvm_cmd_t* cmd, simt::atomic<uint64_t, simt::thread_scope_device>* pc_tail =NULL, uint64_t * cur_pc_tail=NULL) {

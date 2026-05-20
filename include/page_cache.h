@@ -1054,9 +1054,9 @@ struct array_d_t {
             }
             base_master = __shfl_sync(eq_mask,  base_master, master);
 
-            ulonglong4* src_ = (ulonglong4*) r_->get_cache_page_addr(base_master);
-            ulonglong4* dst_ = (ulonglong4*) dest;
-            warp_memcpy<ulonglong4>(dst_, src_, 512/32);
+            ulonglong4_32a* src_ = (ulonglong4_32a*) r_->get_cache_page_addr(base_master);
+            ulonglong4_32a* dst_ = (ulonglong4_32a*) dest;
+            warp_memcpy<ulonglong4_32a>(dst_, src_, 512/32);
 
             __syncwarp(eq_mask);
             if (master == lane)
