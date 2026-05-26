@@ -275,6 +275,7 @@ uint32_t cq_poll(nvm_queue_t* cq, uint16_t search_cid, uint32_t* loc_ = NULL, ui
 inline __device__
 void cq_dequeue(nvm_queue_t* cq, uint16_t pos, nvm_queue_t* sq, uint32_t loc_ = 0, uint32_t cur_head_ = 0, interval_record_t* rec = nullptr) {
     cq->tail.fetch_add(1, simt::memory_order_acq_rel);
+    PROF_STAMP(rec, PROF_PH_CQ_TAIL_ADVANCE);
 
     unsigned int ns = 8;
     while ((cq->pos_locks[pos].val.load(simt::memory_order_relaxed) != 0) ) {
@@ -295,6 +296,7 @@ void cq_dequeue(nvm_queue_t* cq, uint16_t pos, nvm_queue_t* sq, uint32_t loc_ = 
         }
 #endif
     }
+    PROF_STAMP(rec, PROF_PH_CQ_POS_LOCK_WAIT);
 
     cq->head_mark[pos].val.store(LOCKED, simt::memory_order_release);
 
@@ -329,6 +331,7 @@ void cq_dequeue(nvm_queue_t* cq, uint16_t pos, nvm_queue_t* sq, uint32_t loc_ = 
 #endif
             }
     }
+    PROF_STAMP(rec, PROF_PH_CQ_HEAD_DOORBELL);
 
 	uint64_t j = 0;
     uint32_t new_head = cq->head.load(simt::memory_order_relaxed);

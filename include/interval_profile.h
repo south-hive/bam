@@ -20,7 +20,10 @@
  *   3  sq_cmd_copy        (end of)
  *   4  sq_tail_advance    (end of)
  *   5  cq_poll_scan       (end of)
- *   6  cq_head_advance    (end of)   -- this is also the request boundary
+ *   6  cq_tail_advance    (end of)   -- inside cq_dequeue: after cq->tail.fetch_add
+ *   7  cq_pos_lock_wait   (end of)   -- inside cq_dequeue: after the second pos_locks spin succeeds
+ *   8  cq_head_doorbell   (end of)   -- inside cq_dequeue: after the leader-election + MMIO loop exits
+ *   9  cq_head_advance    (end of)   -- inside cq_dequeue: final head>=loc_ wait. Also the request boundary.
  */
 #ifndef __INTERVAL_PROFILE_H__
 #define __INTERVAL_PROFILE_H__
@@ -32,16 +35,19 @@
 #include <stdint.h>
 
 #define PROF_K_SAMPLES 32
-#define PROF_N_PHASES  7
+#define PROF_N_PHASES  10
 
 /* Phase indices (must match the comment block above). */
-#define PROF_PH_CID_ACQUIRE     0
-#define PROF_PH_CMD_BUILD       1
-#define PROF_PH_SQ_TICKET_WAIT  2
-#define PROF_PH_SQ_CMD_COPY     3
-#define PROF_PH_SQ_TAIL_ADVANCE 4
-#define PROF_PH_CQ_POLL_SCAN    5
-#define PROF_PH_CQ_HEAD_ADVANCE 6
+#define PROF_PH_CID_ACQUIRE      0
+#define PROF_PH_CMD_BUILD        1
+#define PROF_PH_SQ_TICKET_WAIT   2
+#define PROF_PH_SQ_CMD_COPY      3
+#define PROF_PH_SQ_TAIL_ADVANCE  4
+#define PROF_PH_CQ_POLL_SCAN     5
+#define PROF_PH_CQ_TAIL_ADVANCE  6
+#define PROF_PH_CQ_POS_LOCK_WAIT 7
+#define PROF_PH_CQ_HEAD_DOORBELL 8
+#define PROF_PH_CQ_HEAD_ADVANCE  9
 
 struct interval_record_t {
     uint64_t birth;
