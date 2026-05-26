@@ -439,7 +439,7 @@ struct page_cache_d_t {
 
 };
 
-__device__ void read_data(page_cache_d_t* pc, QueuePair* qp, const uint64_t starting_lba, const uint64_t n_blocks, const unsigned long long pc_entry);
+__device__ void read_data(page_cache_d_t* pc, QueuePair* qp, const uint64_t starting_lba, const uint64_t n_blocks, const unsigned long long pc_entry, interval_record_t* rec = nullptr);
 __device__ void write_data(page_cache_d_t* pc, QueuePair* qp, const uint64_t starting_lba, const uint64_t n_blocks, const unsigned long long pc_entry);
 
 __forceinline__
@@ -1600,9 +1600,10 @@ inline __device__ void enqueue_second(page_cache_d_t* pc, QueuePair* qp, const u
 
 }
 
-inline __device__ void read_data(page_cache_d_t* pc, QueuePair* qp, const uint64_t starting_lba, const uint64_t n_blocks, const unsigned long long pc_entry) {
+inline __device__ void read_data(page_cache_d_t* pc, QueuePair* qp, const uint64_t starting_lba, const uint64_t n_blocks, const unsigned long long pc_entry, interval_record_t* rec) {
     nvm_cmd_t cmd;
     uint16_t cid = get_cid(&(qp->sq));
+    PROF_STAMP(rec, PROF_PH_CID_ACQUIRE);
 
     nvm_cmd_header(&cmd, cid, NVM_IO_READ, qp->nvmNamespace);
     uint64_t prp1 = pc->prp1[pc_entry];
@@ -1611,15 +1612,17 @@ inline __device__ void read_data(page_cache_d_t* pc, QueuePair* qp, const uint64
         prp2 = pc->prp2[pc_entry];
     nvm_cmd_data_ptr(&cmd, prp1, prp2);
     nvm_cmd_rw_blks(&cmd, starting_lba, n_blocks);
-    uint16_t sq_pos = sq_enqueue(&qp->sq, &cmd);
+    PROF_STAMP(rec, PROF_PH_CMD_BUILD);
+    uint16_t sq_pos = sq_enqueue(&qp->sq, &cmd, NULL, NULL, rec);
     uint32_t head, head_;
 
-    uint32_t cq_pos = cq_poll(&qp->cq, cid, &head, &head_);
+    uint32_t cq_pos = cq_poll(&qp->cq, cid, &head, &head_, rec);
 
     qp->cq.tail.fetch_add(1, simt::memory_order_acq_rel);
 
-    cq_dequeue(&qp->cq, cq_pos, &qp->sq, head, head_);
+    cq_dequeue(&qp->cq, cq_pos, &qp->sq, head, head_, rec);
     put_cid(&qp->sq, cid);
+    PROF_NEXT_REQ(rec);
 }
 
 inline __device__ void write_data(page_cache_d_t* pc, QueuePair* qp, const uint64_t starting_lba, const uint64_t n_blocks, const unsigned long long pc_entry) {

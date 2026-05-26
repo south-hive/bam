@@ -14,6 +14,7 @@
 #include "host_util.h"
 #include "nvm_types.h"
 #include "nvm_util.h"
+#include "interval_profile.h"
 #include <simt/atomic>
 #define LOCKED   1
 #define UNLOCKED 0
@@ -118,7 +119,7 @@ uint32_t move_head_sq(nvm_queue_t* q, uint32_t cur_head) {
 typedef ulonglong4_32a copy_type;
 
 inline __device__
-uint16_t sq_enqueue(nvm_queue_t* sq, nvm_cmd_t* cmd, simt::atomic<uint64_t, simt::thread_scope_device>* pc_tail =NULL, uint64_t * cur_pc_tail=NULL) {
+uint16_t sq_enqueue(nvm_queue_t* sq, nvm_cmd_t* cmd, simt::atomic<uint64_t, simt::thread_scope_device>* pc_tail =NULL, uint64_t * cur_pc_tail=NULL, interval_record_t* rec = nullptr) {
 
     uint32_t ticket;
     ticket = sq->in_ticket.fetch_add(1, simt::memory_order_relaxed);
@@ -146,6 +147,8 @@ uint16_t sq_enqueue(nvm_queue_t* sq, nvm_cmd_t* cmd, simt::atomic<uint64_t, simt
 #endif
     }
 
+    PROF_STAMP(rec, PROF_PH_SQ_TICKET_WAIT);
+
     copy_type* queue_loc = ((copy_type*)(((nvm_cmd_t*)(sq->vaddr)) + pos));
     copy_type* cmd_ = ((copy_type*)(cmd->dword));
 
@@ -153,6 +156,8 @@ uint16_t sq_enqueue(nvm_queue_t* sq, nvm_cmd_t* cmd, simt::atomic<uint64_t, simt
     for (uint32_t i = 0; i < 64/sizeof(copy_type); i++) {
         queue_loc[i] = cmd_[i];
     }
+
+    PROF_STAMP(rec, PROF_PH_SQ_CMD_COPY);
 
     if (pc_tail) {
         *cur_pc_tail = pc_tail->load(simt::memory_order_relaxed);
@@ -196,6 +201,7 @@ uint16_t sq_enqueue(nvm_queue_t* sq, nvm_cmd_t* cmd, simt::atomic<uint64_t, simt
     }
 
     sq->tickets[pos].val.fetch_add(1, simt::memory_order_acq_rel);
+    PROF_STAMP(rec, PROF_PH_SQ_TAIL_ADVANCE);
     return pos;
 
 }
@@ -234,7 +240,7 @@ void sq_dequeue(nvm_queue_t* sq, uint16_t pos) {
 }
 
 inline __device__
-uint32_t cq_poll(nvm_queue_t* cq, uint16_t search_cid, uint32_t* loc_ = NULL, uint32_t* cq_head = NULL) {
+uint32_t cq_poll(nvm_queue_t* cq, uint16_t search_cid, uint32_t* loc_ = NULL, uint32_t* cq_head = NULL, interval_record_t* rec = nullptr) {
     uint64_t j = 0;
     unsigned int ns = 8;
     while (true) {
@@ -250,6 +256,7 @@ uint32_t cq_poll(nvm_queue_t* cq, uint16_t search_cid, uint32_t* loc_ = NULL, ui
             if ((cid == search_cid) && (phase == search_phase)){
                 *cq_head = head;
                 *loc_ = cur_head;
+                PROF_STAMP(rec, PROF_PH_CQ_POLL_SCAN);
                 return loc;
             }
             if (phase != search_phase)
@@ -266,7 +273,7 @@ uint32_t cq_poll(nvm_queue_t* cq, uint16_t search_cid, uint32_t* loc_ = NULL, ui
 }
 
 inline __device__
-void cq_dequeue(nvm_queue_t* cq, uint16_t pos, nvm_queue_t* sq, uint32_t loc_ = 0, uint32_t cur_head_ = 0) {
+void cq_dequeue(nvm_queue_t* cq, uint16_t pos, nvm_queue_t* sq, uint32_t loc_ = 0, uint32_t cur_head_ = 0, interval_record_t* rec = nullptr) {
     cq->tail.fetch_add(1, simt::memory_order_acq_rel);
 
     unsigned int ns = 8;
@@ -350,6 +357,7 @@ void cq_dequeue(nvm_queue_t* cq, uint16_t pos, nvm_queue_t* sq, uint32_t loc_ = 
     } while(true);
 
     cq->pos_locks[pos].val.store(0, simt::memory_order_release);
+    PROF_STAMP(rec, PROF_PH_CQ_HEAD_ADVANCE);
 }
 
 #endif // __NVM_PARALLEL_QUEUE_H_
