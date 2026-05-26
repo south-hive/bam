@@ -14,16 +14,18 @@
  * 32-command sequence rather than replicate a single averaged cmd.
  *
  * Phase indices into stamps[r][...]:
- *   0  cid_acquire        (end of)
- *   1  cmd_build          (end of)
- *   2  sq_ticket_wait     (end of)
- *   3  sq_cmd_copy        (end of)
- *   4  sq_tail_advance    (end of)
- *   5  cq_poll_scan       (end of)
- *   6  cq_tail_advance    (end of)   -- inside cq_dequeue: after cq->tail.fetch_add
- *   7  cq_pos_lock_wait   (end of)   -- inside cq_dequeue: after the second pos_locks spin succeeds
- *   8  cq_head_doorbell   (end of)   -- inside cq_dequeue: after the leader-election + MMIO loop exits
- *   9  cq_head_advance    (end of)   -- inside cq_dequeue: final head>=loc_ wait. Also the request boundary.
+ *   0  submit_start       (start of)  -- entry to read_data / submit_cmd, before get_cid
+ *   1  cid_acquire        (end of)
+ *   2  cmd_build          (end of)
+ *   3  sq_ticket_wait     (end of)
+ *   4  sq_cmd_copy        (end of)
+ *   5  sq_tail_advance    (end of)
+ *   6  complete_start     (start of)  -- entry to cq_poll / cq_poll_indiscriminate, before scan
+ *   7  cq_poll_scan       (end of)
+ *   8  cq_tail_advance    (end of)   -- inside cq_dequeue: after cq->tail.fetch_add
+ *   9  cq_pos_lock_wait   (end of)   -- inside cq_dequeue: after the second pos_locks spin succeeds
+ *  10  cq_head_doorbell   (end of)   -- inside cq_dequeue: after the leader-election + MMIO loop exits
+ *  11  cq_head_advance    (end of)   -- inside cq_dequeue: final head>=loc_ wait. Also the request boundary.
  */
 #ifndef __INTERVAL_PROFILE_H__
 #define __INTERVAL_PROFILE_H__
@@ -35,19 +37,21 @@
 #include <stdint.h>
 
 #define PROF_K_SAMPLES 32
-#define PROF_N_PHASES  10
+#define PROF_N_PHASES  12
 
 /* Phase indices (must match the comment block above). */
-#define PROF_PH_CID_ACQUIRE      0
-#define PROF_PH_CMD_BUILD        1
-#define PROF_PH_SQ_TICKET_WAIT   2
-#define PROF_PH_SQ_CMD_COPY      3
-#define PROF_PH_SQ_TAIL_ADVANCE  4
-#define PROF_PH_CQ_POLL_SCAN     5
-#define PROF_PH_CQ_TAIL_ADVANCE  6
-#define PROF_PH_CQ_POS_LOCK_WAIT 7
-#define PROF_PH_CQ_HEAD_DOORBELL 8
-#define PROF_PH_CQ_HEAD_ADVANCE  9
+#define PROF_PH_SUBMIT_START     0
+#define PROF_PH_CID_ACQUIRE      1
+#define PROF_PH_CMD_BUILD        2
+#define PROF_PH_SQ_TICKET_WAIT   3
+#define PROF_PH_SQ_CMD_COPY      4
+#define PROF_PH_SQ_TAIL_ADVANCE  5
+#define PROF_PH_COMPLETE_START   6
+#define PROF_PH_CQ_POLL_SCAN     7
+#define PROF_PH_CQ_TAIL_ADVANCE  8
+#define PROF_PH_CQ_POS_LOCK_WAIT 9
+#define PROF_PH_CQ_HEAD_DOORBELL 10
+#define PROF_PH_CQ_HEAD_ADVANCE  11
 
 struct interval_record_t {
     uint64_t birth;

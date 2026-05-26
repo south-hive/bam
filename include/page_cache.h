@@ -1601,6 +1601,7 @@ inline __device__ void enqueue_second(page_cache_d_t* pc, QueuePair* qp, const u
 }
 
 inline __device__ void read_data(page_cache_d_t* pc, QueuePair* qp, const uint64_t starting_lba, const uint64_t n_blocks, const unsigned long long pc_entry, interval_record_t* rec) {
+    PROF_STAMP(rec, PROF_PH_SUBMIT_START);
     nvm_cmd_t cmd;
     uint16_t cid = get_cid(&(qp->sq));
     PROF_STAMP(rec, PROF_PH_CID_ACQUIRE);

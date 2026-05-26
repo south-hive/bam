@@ -241,6 +241,7 @@ void sq_dequeue(nvm_queue_t* sq, uint16_t pos) {
 
 inline __device__
 uint32_t cq_poll(nvm_queue_t* cq, uint16_t search_cid, uint32_t* loc_ = NULL, uint32_t* cq_head = NULL, interval_record_t* rec = nullptr) {
+    PROF_STAMP(rec, PROF_PH_COMPLETE_START);
     uint64_t j = 0;
     unsigned int ns = 8;
     while (true) {
